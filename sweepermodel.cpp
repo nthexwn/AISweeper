@@ -1,11 +1,44 @@
+#include <QTime>
 #include "sweepermodel.h"
+
+int SweeperModel::getRandomValue(int low, int high)
+{
+    // Random number between low and high
+    return qrand() % ((high + 1) - low) + low;
+}
+
+void SweeperModel::assignMinesToModel(SweeperModel *sweeperModel)
+{
+    QTime time = QTime::currentTime();
+    qsrand((uint)time.msec());
+    int minimumRow = 0;
+    int maximumRow = sweeperModel->height;
+    int row = getRandomValue(minimumRow, maximumRow);
+    int minimumColumn = 0;
+    int maximumColumn = sweeperModel->width;
+    int column = getRandomValue(minimumColumn, maximumColumn);
+    for(int i = 0; i < sweeperModel->mines; i++)
+    {
+        // If the randomly chosen location is already mined then we'll need to choose another one.
+        while(sweeperModel->getNode(row, column).mined)
+        {
+            // We'll keep choosing locations until we find one that's empty.
+            row = getRandomValue(minimumRow, maximumRow);
+            column = getRandomValue(minimumColumn, maximumColumn);
+        }
+
+        // We'll now assign a mine to the node at this location.
+        SweeperNode node = sweeperModel->getNode(row, column);
+        node.mined = true;
+    }
+}
 
 SweeperModel::SweeperModel(short height, short width, short mines)
 {
-    gameState = GAME_STATE::Loading;
+    gameState = Loading;
     if(height < 1)
     {
-        gameState = GAME_STATE::Error_Height;
+        gameState = Error_Height;
         return;
     }
     else
@@ -15,7 +48,7 @@ SweeperModel::SweeperModel(short height, short width, short mines)
 
     if(width < 1)
     {
-        gameState = GAME_STATE::Error_Width;
+        gameState = Error_Width;
         return;
     }
     else
@@ -25,7 +58,7 @@ SweeperModel::SweeperModel(short height, short width, short mines)
 
     if(mines > height * width - 1)
     {
-        gameState = GAME_STATE::Error_Mines;
+        gameState = Error_Mines;
         return;
     }
     else
@@ -37,6 +70,8 @@ SweeperModel::SweeperModel(short height, short width, short mines)
     {
         nodes.push_back(new SweeperNode());
     }
+
+    assignMinesToModel(this);
 }
 
 SweeperModel::~SweeperModel()

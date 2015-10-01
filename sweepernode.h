@@ -25,6 +25,7 @@ public:
 
     NODE_STATE nodeState;
     bool mined;
+    bool nodeAlreadyChecked;
 
     SweeperNode();
 };

@@ -1,11 +1,17 @@
-#include <iostream>
+#include <QApplication>
+#include "mainwindow.h"
 #include "sweepermodel.h"
+#include <iostream>
+#include <QTime>
+#include <string>
 
-int main()
+int main(int argc, char *argv[])
 {
-    SweeperModel *sweeperModel = new SweeperModel(10, 10, 20);
-    std::cout << "Hello World!" << std::endl;
+    QApplication a(argc, argv);
+    SweeperModel *sweeperModel = new SweeperModel(16, 16, 40);
+    sweeperModel->gameState = SweeperModel::Playing;
+    MainWindow w;
+    w.show();
     delete sweeperModel;
-    std::cout << "Goodbye World!" << std::endl;
-    return 0;
+    return a.exec();
 }

@@ -1,13 +1,24 @@
-TEMPLATE = app
-CONFIG += console c++11
-CONFIG -= app_bundle
-CONFIG -= qt
+#-------------------------------------------------
+#
+# Project created by QtCreator 2015-09-20T16:03:37
+#
+#-------------------------------------------------
 
-SOURCES += main.cpp \
+QT       += core gui
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+TARGET = AISweeper
+TEMPLATE = app
+
+
+SOURCES += main.cpp\
+        mainwindow.cpp \
     sweepermodel.cpp \
     sweepernode.cpp
 
-HEADERS += \
+HEADERS  += mainwindow.h \
     sweepermodel.h \
     sweepernode.h
 
+FORMS    += mainwindow.ui

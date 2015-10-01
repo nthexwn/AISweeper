@@ -27,6 +27,8 @@ public:
     short width;
     short mines;
 
+    int getRandomValue(int low, int high);
+    void assignMinesToModel(SweeperModel *sweeperModel);
     SweeperModel(short height, short width, short mines);
     ~SweeperModel();
     SweeperNode& getNode(short row, short column);
