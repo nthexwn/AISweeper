@@ -13,12 +13,19 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
     sweepermodel.cpp \
-    sweepernode.cpp
+    sweepernode.cpp \
+    controlwindow.cpp \
+    sweeperwidget.cpp \
+    sweepergame.cpp \
+    commonfunctions.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += \
     sweepermodel.h \
-    sweepernode.h
+    sweepernode.h \
+    controlwindow.h \
+    sweeperwidget.h \
+    sweepergame.h \
+    commonfunctions.h
 
-FORMS    += mainwindow.ui
+FORMS    +=

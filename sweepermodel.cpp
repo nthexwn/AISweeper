@@ -1,77 +1,44 @@
-#include <QTime>
+#include "commonfunctions.h"
 #include "sweepermodel.h"
 
-int SweeperModel::getRandomValue(int low, int high)
+SweeperModel::SweeperModel(int height, int width, int mines)
 {
-    // Random number between low and high
-    return qrand() % ((high + 1) - low) + low;
-}
+    // The game isn't ready to play yet.
+    this->gameState = SweeperModel::Processing;
 
-void SweeperModel::assignMinesToModel(SweeperModel *sweeperModel)
-{
-    QTime time = QTime::currentTime();
-    qsrand((uint)time.msec());
-    int minimumRow = 0;
-    int maximumRow = sweeperModel->height;
-    int row = getRandomValue(minimumRow, maximumRow);
-    int minimumColumn = 0;
-    int maximumColumn = sweeperModel->width;
-    int column = getRandomValue(minimumColumn, maximumColumn);
-    for(int i = 0; i < sweeperModel->mines; i++)
-    {
-        // If the randomly chosen location is already mined then we'll need to choose another one.
-        while(sweeperModel->getNode(row, column).mined)
-        {
-            // We'll keep choosing locations until we find one that's empty.
-            row = getRandomValue(minimumRow, maximumRow);
-            column = getRandomValue(minimumColumn, maximumColumn);
-        }
+    // NOTE: No error checking is performed here since it is up to the ControlWindow to validate the parameters before
+    // the game object and model have been created.
+    this->height = height;
+    this->width = width;
+    this->mines = mines;
 
-        // We'll now assign a mine to the node at this location.
-        SweeperNode node = sweeperModel->getNode(row, column);
-        node.mined = true;
-    }
-}
-
-SweeperModel::SweeperModel(short height, short width, short mines)
-{
-    gameState = Loading;
-    if(height < 1)
-    {
-        gameState = Error_Height;
-        return;
-    }
-    else
-    {
-        this->height = height;
-    }
-
-    if(width < 1)
-    {
-        gameState = Error_Width;
-        return;
-    }
-    else
-    {
-        this->width = width;
-    }
-
-    if(mines > height * width - 1)
-    {
-        gameState = Error_Mines;
-        return;
-    }
-    else
-    {
-        this->mines = mines;
-    }
-
-    for(short i = 0; i < height * width; i++)
+    // Create the nodes.
+    int nodeCount = height * width;
+    for(int i = 0; i < nodeCount; i++)
     {
         nodes.push_back(new SweeperNode());
     }
 
-    assignMinesToModel(this);
+    // Randomly assign mines to the nodes that we just created.
+    int row, col;
+    for(int i = 0; i < mines; i++)
+    {
+        // Get random values for the row and column.
+        row = CommonFunctions::getRandValInclusive(0, height - 1);
+        col = CommonFunctions::getRandValInclusive(0, width - 1);
+
+        // If the randomly chosen location is already mined then we'll need to choose another one.
+        while(getNode(row, col)->mined)
+        {
+            // We'll keep choosing locations until we find one that's empty.
+            row = CommonFunctions::getRandValInclusive(0, height - 1);
+            col = CommonFunctions::getRandValInclusive(0, width - 1);
+        }
+
+        // We'll now assign a mine to the node at this location.
+        SweeperNode *node = getNode(row, col);
+        node->mined = true;
+    }
 }
 
 SweeperModel::~SweeperModel()
@@ -82,8 +49,8 @@ SweeperModel::~SweeperModel()
     }
 }
 
-SweeperNode& SweeperModel::getNode(short row, short column)
+SweeperNode* SweeperModel::getNode(int row, int col)
 {
-    short index = row * width + column;
-    return *nodes[index];
+    int index = row * width + col;
+    return nodes[index];
 }

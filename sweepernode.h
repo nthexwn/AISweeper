@@ -5,7 +5,6 @@
 class SweeperNode
 {
 public:
-
     // Possible node states from a player's perspective.
     enum NODE_STATE
     {
@@ -22,11 +21,9 @@ public:
         BySeven,
         ByEight
     };
-
     NODE_STATE nodeState;
     bool mined;
     bool nodeAlreadyChecked;
-
     SweeperNode();
 };
 
