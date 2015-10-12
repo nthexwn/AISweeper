@@ -1,6 +1,6 @@
-#include "control_window.h"
+#include "../inc/sweeper_control_window.h"
 
-ControlWindow::ControlWindow(QWidget *parent) : QMainWindow(parent)
+SweeperControlWindow::SweeperControlWindow(QWidget *parent) : QMainWindow(parent)
 {
     // The control window contains a central widget.
     // The central widget contains a layout.
@@ -16,14 +16,14 @@ ControlWindow::ControlWindow(QWidget *parent) : QMainWindow(parent)
     layout->addWidget(launchButton);
 }
 
-ControlWindow::~ControlWindow()
+SweeperControlWindow::~SweeperControlWindow()
 {
     delete launchButton;
     delete layout;
     delete sweeperGame;
 }
 
-void ControlWindow::launchButtonClicked()
+void SweeperControlWindow::launchButtonClicked()
 {
     sweeperGame = new SweeperGame();
     sweeperGame->startGame();

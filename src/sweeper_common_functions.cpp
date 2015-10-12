@@ -1,9 +1,9 @@
 #include <QTime>
-#include "common_functions.h"
+#include "../inc/sweeper_common_functions.h"
 
-bool CommonFunctions::qrandSeeded = false;
+bool SweeperCommonFunctions::qrandSeeded = false;
 
-int CommonFunctions::getRandValInclusive(int low, int high)
+int SweeperCommonFunctions::getRandValInclusive(int low, int high)
 {
     if(!qrandSeeded)
     {

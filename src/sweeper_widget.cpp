@@ -1,5 +1,5 @@
 #include <QtGui>
-#include "sweeper_widget.h"
+#include "../inc/sweeper_widget.h"
 
 SweeperWidget::SweeperWidget(const SweeperModel &sweeperModel, QWidget *parent) : QWidget(parent)
 {
@@ -24,6 +24,10 @@ void SweeperWidget::paintEvent(QPaintEvent *event)
     QSize size = this->size();
     int height = size.height();
     int width = size.width();
-    QRectF fullWidgetCanvas = QRectF(0, 0, width, height);
-    painter.fillRect(fullWidgetCanvas, Qt::darkCyan);
+    QRectF fullWidgetCanvasFloating = QRectF(0, 0, width, height);
+    painter.fillRect(fullWidgetCanvasFloating, Qt::darkCyan);
+
+    QRect fullWidgetCanvas = QRect(0, 0, width, height);
+    QPixmap detonated = QPixmap(":/tiles/detonated.png");
+    painter.drawPixmap(fullWidgetCanvas, detonated);
 }

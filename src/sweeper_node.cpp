@@ -1,4 +1,4 @@
-#include "sweeper_node.h"
+#include "../inc/sweeper_node.h"
 
 SweeperNode::SweeperNode()
 {
