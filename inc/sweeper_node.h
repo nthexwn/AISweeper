@@ -8,18 +8,20 @@ public:
     // Possible node states from a player's perspective.
     enum NODE_STATE
     {
-        Hidden,
-        Flagged,
-        Detonated,
-        ByNone,
-        ByOne,
-        ByTwo,
-        ByThree,
-        ByFour,
-        ByFive,
-        BySix,
-        BySeven,
-        ByEight
+        CORRECT,
+        DETONATED,
+        FLAGGED,
+        HIDDEN,
+        INCORRECT,
+        MISSED_MINE,
+        REVEALED,
+        REVEALED_TWO,
+        REVEALED_THREE,
+        REVEALED_FOUR,
+        REVEALED_FIVE,
+        REVEALED_SIX,
+        REVEALED_SEVEN,
+        REVEALED_EIGHT
     };
     NODE_STATE nodeState;
     bool mined;

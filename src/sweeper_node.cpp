@@ -2,7 +2,7 @@
 
 SweeperNode::SweeperNode()
 {
-    nodeState = Hidden;
+    nodeState = HIDDEN;
     mined = false;
     nodeAlreadyChecked = false;
 }

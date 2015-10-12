@@ -13,8 +13,8 @@ public:
     void startGame();
 
 private:
-    SweeperModel *sweeperModel;
-    SweeperWidget *sweeperWidget;
+    SweeperModel* sweeperModel;
+    SweeperWidget* sweeperWidget;
 };
 
 #endif // SWEEPER_GAME_H

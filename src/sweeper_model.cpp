@@ -36,7 +36,7 @@ SweeperModel::SweeperModel(int height, int width, int mines)
         }
 
         // We'll now assign a mine to the node at this location.
-        SweeperNode *node = getNode(row, col);
+        SweeperNode* node = getNode(row, col);
         node->mined = true;
     }
 }
