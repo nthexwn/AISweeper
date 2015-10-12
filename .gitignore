@@ -1,6 +1,10 @@
 # This file is used to ignore files which are generated
 # ----------------------------------------------------------------------------
 
+# ------
+# [Auto]
+# ------
+
 *~
 *.autosave
 *.a
@@ -70,4 +74,16 @@ Thumbs.db
 *.dll
 *.exe
 
+# -------
+# [/Auto]
+# -------
 
+# --------
+# [Manual]
+# --------
+
+*.pro.user
+
+# --------
+# [/Manual]
+# --------

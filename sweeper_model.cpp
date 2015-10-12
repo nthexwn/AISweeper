@@ -1,5 +1,5 @@
-#include "commonfunctions.h"
-#include "sweepermodel.h"
+#include "common_functions.h"
+#include "sweeper_model.h"
 
 SweeperModel::SweeperModel(int height, int width, int mines)
 {

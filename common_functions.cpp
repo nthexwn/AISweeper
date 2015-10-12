@@ -1,5 +1,5 @@
 #include <QTime>
-#include "commonfunctions.h"
+#include "common_functions.h"
 
 bool CommonFunctions::qrandSeeded = false;
 

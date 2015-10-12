@@ -1,5 +1,5 @@
 #include <QtGui>
-#include "sweeperwidget.h"
+#include "sweeper_widget.h"
 
 SweeperWidget::SweeperWidget(const SweeperModel &sweeperModel, QWidget *parent) : QWidget(parent)
 {

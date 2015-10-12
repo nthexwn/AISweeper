@@ -1,8 +1,8 @@
-#ifndef SWEEPERWIDGET_H
-#define SWEEPERWIDGET_H
+#ifndef SWEEPER_WIDGET_H
+#define SWEEPER_WIDGET_H
 
 #include <QWidget>
-#include "sweepermodel.h"
+#include "sweeper_model.h"
 
 class SweeperWidget : public QWidget
 {
@@ -19,4 +19,4 @@ private:
     SweeperModel const *sweeperModel;
 };
 
-#endif // SWEEPERGRID_H
+#endif // SWEEPER_WIDGET_H

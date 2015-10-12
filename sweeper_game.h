@@ -1,8 +1,8 @@
-#ifndef SWEEPERGAME_H
-#define SWEEPERGAME_H
+#ifndef SWEEPER_GAME_H
+#define SWEEPER_GAME_H
 
-#include "sweepermodel.h"
-#include "sweeperwidget.h"
+#include "sweeper_model.h"
+#include "sweeper_widget.h"
 
 class SweeperGame : public QObject
 {
@@ -17,4 +17,4 @@ private:
     SweeperWidget *sweeperWidget;
 };
 
-#endif // SWEEPERGAME_H
+#endif // SWEEPER_GAME_H

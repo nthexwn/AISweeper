@@ -1,0 +1,20 @@
+<RCC>
+    <qresource prefix="/tiles">
+        <file>resources/correct.png</file>
+        <file>resources/detonated.png</file>
+        <file>resources/flagged.png</file>
+        <file>resources/hidden.png</file>
+        <file>resources/incorrect.png</file>
+        <file>resources/mined.png</file>
+        <file>resources/pushed.png</file>
+        <file>resources/revealed.png</file>
+        <file>resources/revealed_eight.png</file>
+        <file>resources/revealed_five.png</file>
+        <file>resources/revealed_four.png</file>
+        <file>resources/revealed_one.png</file>
+        <file>resources/revealed_seven.png</file>
+        <file>resources/revealed_six.png</file>
+        <file>resources/revealed_three.png</file>
+        <file>resources/revealed_two.png</file>
+    </qresource>
+</RCC>

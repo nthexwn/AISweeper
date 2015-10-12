@@ -1,4 +1,4 @@
-#include "sweepergame.h"
+#include "sweeper_game.h"
 
 SweeperGame::SweeperGame()
 {

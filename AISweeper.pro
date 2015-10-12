@@ -13,19 +13,22 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-    sweepermodel.cpp \
-    sweepernode.cpp \
-    controlwindow.cpp \
-    sweeperwidget.cpp \
-    sweepergame.cpp \
-    commonfunctions.cpp
+    common_functions.cpp \
+    control_window.cpp \
+    sweeper_game.cpp \
+    sweeper_model.cpp \
+    sweeper_node.cpp \
+    sweeper_widget.cpp
 
 HEADERS  += \
-    sweepermodel.h \
-    sweepernode.h \
-    controlwindow.h \
-    sweeperwidget.h \
-    sweepergame.h \
-    commonfunctions.h
+    common_functions.h \
+    control_window.h \
+    sweeper_game.h \
+    sweeper_model.h \
+    sweeper_node.h \
+    sweeper_widget.h
 
 FORMS    +=
+
+RESOURCES += \
+    sweeper_resources.qrc

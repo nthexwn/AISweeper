@@ -1,8 +1,8 @@
-#ifndef SWEEPERMODEL
-#define SWEEPERMODEL
+#ifndef SWEEPER_MODEL_H
+#define SWEEPER_MODEL_H
 
 #include <vector>
-#include "sweepernode.h"
+#include "sweeper_node.h"
 
 // Abstraction of the game grid as a 1-dimensional vector along with a flag indicating game state.
 class SweeperModel
@@ -28,4 +28,4 @@ private:
     std::vector<SweeperNode*> nodes;
 };
 
-#endif // SWEEPERMODEL
+#endif // SWEEPER_MODEL_H

@@ -1,8 +1,8 @@
-#ifndef CONTROLWINDOW_H
-#define CONTROLWINDOW_H
+#ifndef CONTROL_WINDOW_H
+#define CONTROL_WINDOW_H
 
 #include <QtWidgets>
-#include "sweepergame.h"
+#include "sweeper_game.h"
 
 class ControlWindow : public QMainWindow
 {
@@ -23,4 +23,4 @@ private slots:
     void launchButtonClicked();
 };
 
-#endif // CONTROLWINDOW_H
+#endif // CONTROL_WINDOW_H

@@ -1,5 +1,5 @@
-#ifndef COMMONFUNCTIONS_H
-#define COMMONFUNCTIONS_H
+#ifndef COMMON_FUNCTIONS_H
+#define COMMON_FUNCTIONS_H
 
 class CommonFunctions
 {
@@ -10,4 +10,4 @@ private:
     static bool qrandSeeded;
 };
 
-#endif // COMMONFUNCTIONS
+#endif // COMMON_FUNCTIONS_H

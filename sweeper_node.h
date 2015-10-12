@@ -1,5 +1,5 @@
-#ifndef SWEEPERNODE_H
-#define SWEEPERNODE_H
+#ifndef SWEEPER_NODE_H
+#define SWEEPER_NODE_H
 
 // Information regarding the state of an individual node on the game grid.
 class SweeperNode
@@ -27,4 +27,4 @@ public:
     SweeperNode();
 };
 
-#endif // SWEEPERNODE_H
+#endif // SWEEPER_NODE_H
