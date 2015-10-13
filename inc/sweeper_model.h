@@ -17,10 +17,10 @@ public:
         Won,
     };
     GAME_STATE gameState;
-    int height;
     int width;
+    int height;
     int mines;
-    SweeperModel(int height, int width, int mines);
+    SweeperModel(int width, int height, int mines);
     ~SweeperModel();
     SweeperNode* getNode(int row, int col);
 

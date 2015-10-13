@@ -1,19 +1,19 @@
 #include "../inc/sweeper_common_functions.h"
 #include "../inc/sweeper_model.h"
 
-SweeperModel::SweeperModel(int height, int width, int mines)
+SweeperModel::SweeperModel(int width, int height, int mines)
 {
     // The game isn't ready to play yet.
     this->gameState = SweeperModel::Processing;
 
     // NOTE: No error checking is performed here since it is up to the SweeperControlWindow to validate the parameters
     // before the game object and model have been created.
-    this->height = height;
     this->width = width;
+    this->height = height;
     this->mines = mines;
 
     // Create the nodes.
-    int nodeCount = height * width;
+    int nodeCount = width * height;
     for(int i = 0; i < nodeCount; i++)
     {
         nodes.push_back(new SweeperNode());

@@ -2,7 +2,7 @@
 
 SweeperGame::SweeperGame(bool useGui)
 {
-    sweeperModel = new SweeperModel(9, 9, 10);
+    sweeperModel = new SweeperModel(30, 15, 10);
     this->useGui = useGui;
 }
 

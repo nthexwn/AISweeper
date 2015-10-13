@@ -56,11 +56,11 @@ void SweeperWidget::hookResources()
 
 QSize SweeperWidget::sizeHint() const
 {
-    int minTileHeight = tileHidden->height() / 2;
     int minTileWidth = tileHidden->width() / 2;
-    int minWidgetHeight = minTileHeight * sweeperModel->height;
+    int minTileHeight = tileHidden->height() / 2;
     int minWidgetWidth = minTileWidth * sweeperModel->width;
-    return QSize(minWidgetHeight, minWidgetWidth);
+    int minWidgetHeight = minTileHeight * sweeperModel->height;
+    return QSize(minWidgetWidth, minWidgetHeight);
 }
 
 void SweeperWidget::unhookResources()
@@ -120,17 +120,17 @@ void SweeperWidget::paintEvent(QPaintEvent* event)
 {
     event->accept();
     QPainter painter(this);
-    int widgetHeight = this->size().height();
     int widgetWidth = this->size().width();
+    int widgetHeight = this->size().height();
     QRect backgroundRect = QRect(0, 0, widgetWidth, widgetHeight);
     painter.fillRect(backgroundRect, Qt::black);
-    int tileHeight = widgetHeight / sweeperModel->height;
     int tileWidth  = widgetWidth / sweeperModel->width;
-    tileHeight = tileWidth = qMin(tileHeight, tileWidth);
-    int totalTileHeight = tileHeight * sweeperModel->height;
+    int tileHeight = widgetHeight / sweeperModel->height;
+    tileWidth = tileHeight = qMin(tileWidth, tileHeight);
     int totalTileWidth = tileWidth * sweeperModel->width;
-    int marginHeight = (widgetHeight - totalTileHeight) / 2;
+    int totalTileHeight = tileHeight * sweeperModel->height;
     int marginWidth = (widgetWidth - totalTileWidth) / 2;
+    int marginHeight = (widgetHeight - totalTileHeight) / 2;
     int horizStart, vertStart;
     QRect tileRect;
     SweeperNode* node;
@@ -205,15 +205,15 @@ SweeperNode* SweeperWidget::locateNodeUnderCursor()
 {
     QPoint cursorPos = QCursor::pos();
     QPoint widgetPos = mapToGlobal(QPoint(0,0));
-    int widgetHeight = this->size().height();
     int widgetWidth = this->size().width();
-    int tileHeight = widgetHeight / sweeperModel->height;
+    int widgetHeight = this->size().height();
     int tileWidth  = widgetWidth / sweeperModel->width;
-    tileHeight = tileWidth = qMin(tileHeight, tileWidth);
-    int totalTileHeight = tileHeight * sweeperModel->height;
+    int tileHeight = widgetHeight / sweeperModel->height;
+    tileWidth = tileHeight = qMin(tileWidth, tileHeight);
     int totalTileWidth = tileWidth * sweeperModel->width;
-    int marginHeight = (widgetHeight - totalTileHeight) / 2;
+    int totalTileHeight = tileHeight * sweeperModel->height;
     int marginWidth = (widgetWidth - totalTileWidth) / 2;
+    int marginHeight = (widgetHeight - totalTileHeight) / 2;
     QPoint gridPos = QPoint(marginWidth, marginHeight) + widgetPos;
     QPoint relativePos = cursorPos - gridPos;
     int row = relativePos.y() / tileHeight;
