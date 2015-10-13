@@ -1,18 +1,28 @@
 #include "../inc/sweeper_game.h"
 
-SweeperGame::SweeperGame()
+SweeperGame::SweeperGame(bool useGui)
 {
-    sweeperModel = new SweeperModel(3, 3, 4);
+    sweeperModel = new SweeperModel(9, 9, 10);
+    this->useGui = useGui;
 }
 
 SweeperGame::~SweeperGame()
 {
+    delete frame;
     delete sweeperModel;
-    delete sweeperWidget;
 }
 
 void SweeperGame::startGame()
 {
-    sweeperWidget = new SweeperWidget(*sweeperModel);
-    sweeperWidget->show();
+    if(useGui)
+    {
+        sweeperWidget = new SweeperWidget(*sweeperModel);
+        frame = new QFrame();
+        frame->setFrameShape(QFrame::Panel);
+        layout = new QVBoxLayout();
+        layout->setMargin(0);
+        frame->setLayout(layout);
+        layout->addWidget(sweeperWidget);
+        frame->show();
+    }
 }

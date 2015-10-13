@@ -1,6 +1,8 @@
 #include "../inc/sweeper_widget.h"
 
-bool SweeperWidget::resourceHookStarted = false;
+bool SweeperWidget::mouseOnePressed = false;
+bool SweeperWidget::mouseTwoPressed = false;
+bool SweeperWidget::resourceHookingStarted = false;
 bool SweeperWidget::resourcesHooked = false;
 QPixmap* SweeperWidget::tileCorrect;
 QPixmap* SweeperWidget::tileDetonated;
@@ -10,23 +12,25 @@ QPixmap* SweeperWidget::tileIncorrect;
 QPixmap* SweeperWidget::tileMissedMine;
 QPixmap* SweeperWidget::tilePushed;
 QPixmap* SweeperWidget::tileRevealed;
-QPixmap* SweeperWidget::tileRevealedEight;
-QPixmap* SweeperWidget::tileRevealedFive;
-QPixmap* SweeperWidget::tileRevealedFour;
 QPixmap* SweeperWidget::tileRevealedOne;
-QPixmap* SweeperWidget::tileRevealedSeven;
-QPixmap* SweeperWidget::tileRevealedSix;
-QPixmap* SweeperWidget::tileRevealedThree;
 QPixmap* SweeperWidget::tileRevealedTwo;
+QPixmap* SweeperWidget::tileRevealedThree;
+QPixmap* SweeperWidget::tileRevealedFour;
+QPixmap* SweeperWidget::tileRevealedFive;
+QPixmap* SweeperWidget::tileRevealedSix;
+QPixmap* SweeperWidget::tileRevealedSeven;
+QPixmap* SweeperWidget::tileRevealedEight;
 
 SweeperWidget::SweeperWidget(SweeperModel& sweeperModel, QWidget* parent) : QWidget(parent)
 {
     this->sweeperModel = &sweeperModel;
-    if(!resourcesHooked && !resourceHookStarted)
+    if(!resourcesHooked && !resourceHookingStarted)
     {
-        resourceHookStarted = true;
+        resourceHookingStarted = true;
         hookResources();
     }
+    QSizePolicy sizePolicy = QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+    setSizePolicy(sizePolicy);
 }
 
 void SweeperWidget::hookResources()
@@ -39,45 +43,105 @@ void SweeperWidget::hookResources()
     tileMissedMine = new QPixmap(":/tiles/missedMine.png");
     tilePushed = new QPixmap(":/tiles/pushed.png");
     tileRevealed = new QPixmap(":/tiles/revealed.png");
-    tileRevealedEight = new QPixmap(":/tiles/revealed_eight.png");
-    tileRevealedFive = new QPixmap(":/tiles/revealed_five.png");
-    tileRevealedFour = new QPixmap(":/tiles/revealed_four.png");
     tileRevealedOne = new QPixmap(":/tiles/revealed_one.png");
-    tileRevealedSeven = new QPixmap(":/tiles/revealed_seven.png");
-    tileRevealedSix = new QPixmap(":/tiles/revealed_six.png");
-    tileRevealedThree = new QPixmap(":/tiles/revealed_three.png");
     tileRevealedTwo = new QPixmap(":/tiles/revealed_two.png");
+    tileRevealedThree = new QPixmap(":/tiles/revealed_three.png");
+    tileRevealedFour = new QPixmap(":/tiles/revealed_four.png");
+    tileRevealedFive = new QPixmap(":/tiles/revealed_five.png");
+    tileRevealedSix = new QPixmap(":/tiles/revealed_six.png");
+    tileRevealedSeven = new QPixmap(":/tiles/revealed_seven.png");
+    tileRevealedEight = new QPixmap(":/tiles/revealed_eight.png");
     resourcesHooked = true;
+}
+
+QSize SweeperWidget::sizeHint() const
+{
+    int minTileHeight = tileHidden->height() / 2;
+    int minTileWidth = tileHidden->width() / 2;
+    int minWidgetHeight = minTileHeight * sweeperModel->height;
+    int minWidgetWidth = minTileWidth * sweeperModel->width;
+    return QSize(minWidgetHeight, minWidgetWidth);
+}
+
+void SweeperWidget::unhookResources()
+{
+    delete tileCorrect;
+    delete tileDetonated;
+    delete tileFlagged;
+    delete tileHidden;
+    delete tileIncorrect;
+    delete tileMissedMine;
+    delete tilePushed;
+    delete tileRevealed;
+    delete tileRevealedOne;
+    delete tileRevealedTwo;
+    delete tileRevealedThree;
+    delete tileRevealedFour;
+    delete tileRevealedFive;
+    delete tileRevealedSix;
+    delete tileRevealedSeven;
+    delete tileRevealedEight;
+    resourcesHooked = false;
 }
 
 void SweeperWidget::mousePressEvent(QMouseEvent* event)
 {
-
+    event->accept();
+    Qt::MouseButton button = event->button();
+    if(button & Qt::LeftButton)
+    {
+        mouseOnePressed = true;
+        update();
+    }
+    else if(button & Qt::RightButton)
+    {
+        mouseTwoPressed = true;
+        update();
+    }
 }
 
-void SweeperWidget::mouseMoveEvent(QMouseEvent* event)
+void SweeperWidget::mouseReleaseEvent(QMouseEvent* event)
 {
-
+    event->accept();
+    Qt::MouseButton button = event->button();
+    if(button & Qt::LeftButton)
+    {
+        mouseOnePressed = false;
+        update();
+    }
+    else if(button & Qt::RightButton)
+    {
+        mouseTwoPressed = false;
+        update();
+    }
 }
 
 void SweeperWidget::paintEvent(QPaintEvent* event)
 {
+    event->accept();
     QPainter painter(this);
     int widgetHeight = this->size().height();
     int widgetWidth = this->size().width();
-    int tileHeight = widgetHeight / sweeperModel->height;
-    int tileWidth  = widgetWidth / sweeperModel->width;
     QRect backgroundRect = QRect(0, 0, widgetWidth, widgetHeight);
     painter.fillRect(backgroundRect, Qt::black);
-    QPixmap* tilePixmap;
+    int tileHeight = widgetHeight / sweeperModel->height;
+    int tileWidth  = widgetWidth / sweeperModel->width;
+    tileHeight = tileWidth = qMin(tileHeight, tileWidth);
+    int totalTileHeight = tileHeight * sweeperModel->height;
+    int totalTileWidth = tileWidth * sweeperModel->width;
+    int marginHeight = (widgetHeight - totalTileHeight) / 2;
+    int marginWidth = (widgetWidth - totalTileWidth) / 2;
     int horizStart, vertStart;
     QRect tileRect;
     SweeperNode* node;
-
+    QPixmap* tilePixmap;
     for(int row = 0; row < sweeperModel->height; row++)
     {
         for(int col = 0; col < sweeperModel->width; col++)
         {
+            horizStart = col * tileWidth + marginWidth;
+            vertStart = row * tileHeight + marginHeight;
+            tileRect = QRect(horizStart, vertStart, tileWidth, tileHeight);
             node = sweeperModel->getNode(row, col);
             switch(node->nodeState)
             {
@@ -91,8 +155,12 @@ void SweeperWidget::paintEvent(QPaintEvent* event)
                 tilePixmap = tileFlagged;
                 break;
             case SweeperNode::HIDDEN:
+                if(mouseOnePressed && locateNodeUnderCursor() == node)
+                {
+                    tilePixmap = tilePushed;
+                    break;
+                }
                 tilePixmap = tileHidden;
-                // TODO: If mouse1 is here and suppressed then change this to tiles/pushed.png
                 break;
             case SweeperNode::INCORRECT:
                 tilePixmap = tileIncorrect;
@@ -102,6 +170,9 @@ void SweeperWidget::paintEvent(QPaintEvent* event)
                 break;
             case SweeperNode::REVEALED:
                 tilePixmap = tileRevealed;
+                break;
+            case SweeperNode::REVEALED_ONE:
+                tilePixmap = tileRevealedOne;
                 break;
             case SweeperNode::REVEALED_TWO:
                 tilePixmap = tileRevealedTwo;
@@ -125,31 +196,35 @@ void SweeperWidget::paintEvent(QPaintEvent* event)
                 tilePixmap = tileRevealedEight;
                 break;
             }
-            horizStart = col * tileWidth;
-            vertStart = row * tileHeight;
-            tileRect = QRect(horizStart, vertStart, tileWidth, tileHeight);
             painter.drawPixmap(tileRect, *tilePixmap);
         }
     }
 }
 
-void SweeperWidget::unhookResources()
+SweeperNode* SweeperWidget::locateNodeUnderCursor()
 {
-    delete tileCorrect;
-    delete tileDetonated;
-    delete tileFlagged;
-    delete tileHidden;
-    delete tileIncorrect;
-    delete tileMissedMine;
-    delete tilePushed;
-    delete tileRevealed;
-    delete tileRevealedEight;
-    delete tileRevealedFive;
-    delete tileRevealedFour;
-    delete tileRevealedOne;
-    delete tileRevealedSeven;
-    delete tileRevealedSix;
-    delete tileRevealedThree;
-    delete tileRevealedTwo;
-    resourcesHooked = false;
+    QPoint cursorPos = QCursor::pos();
+    QPoint widgetPos = mapToGlobal(QPoint(0,0));
+    int widgetHeight = this->size().height();
+    int widgetWidth = this->size().width();
+    int tileHeight = widgetHeight / sweeperModel->height;
+    int tileWidth  = widgetWidth / sweeperModel->width;
+    tileHeight = tileWidth = qMin(tileHeight, tileWidth);
+    int totalTileHeight = tileHeight * sweeperModel->height;
+    int totalTileWidth = tileWidth * sweeperModel->width;
+    int marginHeight = (widgetHeight - totalTileHeight) / 2;
+    int marginWidth = (widgetWidth - totalTileWidth) / 2;
+    QPoint gridPos = QPoint(marginWidth, marginHeight) + widgetPos;
+    QPoint relativePos = cursorPos - gridPos;
+    int row = relativePos.y() / tileHeight;
+    if(row < 0 || row >= sweeperModel->height)
+    {
+        return NULL;
+    }
+    int col = relativePos.x() / tileWidth;
+    if(col < 0 || col >= sweeperModel->width)
+    {
+        return NULL;
+    }
+    return sweeperModel->getNode(row, col);
 }

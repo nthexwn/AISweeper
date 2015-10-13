@@ -26,6 +26,6 @@ SweeperControlWindow::~SweeperControlWindow()
 
 void SweeperControlWindow::launchButtonClicked()
 {
-    sweeperGame = new SweeperGame();
+    sweeperGame = new SweeperGame(true);
     sweeperGame->startGame();
 }

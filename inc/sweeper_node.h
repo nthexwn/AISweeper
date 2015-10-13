@@ -15,6 +15,7 @@ public:
         INCORRECT,
         MISSED_MINE,
         REVEALED,
+        REVEALED_ONE,
         REVEALED_TWO,
         REVEALED_THREE,
         REVEALED_FOUR,

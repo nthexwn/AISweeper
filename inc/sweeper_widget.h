@@ -11,16 +11,21 @@ class SweeperWidget : public QWidget
 public:
     SweeperWidget(SweeperModel &sweeperModel, QWidget* parent = 0);
     static void hookResources();
+    virtual QSize sizeHint() const;
     static void unhookResources();
 
 protected:
     void mousePressEvent(QMouseEvent* event);
-    void mouseMoveEvent(QMouseEvent* event);
+    void mouseReleaseEvent(QMouseEvent* event);
     void paintEvent(QPaintEvent* event);
 
 private:
-    static bool resourceHookStarted;
+    SweeperNode* locateNodeUnderCursor();
+    static bool mouseOnePressed;
+    static bool mouseTwoPressed;
+    static bool resourceHookingStarted;
     static bool resourcesHooked;
+    SweeperModel* sweeperModel;
     static QPixmap* tileCorrect;
     static QPixmap* tileDetonated;
     static QPixmap* tileFlagged;
@@ -29,15 +34,14 @@ private:
     static QPixmap* tileMissedMine;
     static QPixmap* tilePushed;
     static QPixmap* tileRevealed;
-    static QPixmap* tileRevealedEight;
-    static QPixmap* tileRevealedFive;
-    static QPixmap* tileRevealedFour;
     static QPixmap* tileRevealedOne;
-    static QPixmap* tileRevealedSeven;
-    static QPixmap* tileRevealedSix;
-    static QPixmap* tileRevealedThree;
     static QPixmap* tileRevealedTwo;
-    SweeperModel* sweeperModel;
+    static QPixmap* tileRevealedThree;
+    static QPixmap* tileRevealedFour;
+    static QPixmap* tileRevealedFive;
+    static QPixmap* tileRevealedSix;
+    static QPixmap* tileRevealedSeven;
+    static QPixmap* tileRevealedEight;
 };
 
 #endif // SWEEPER_WIDGET_H
