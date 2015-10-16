@@ -1,8 +1,9 @@
 #include "../inc/sweeper_node.h"
 
-SweeperNode::SweeperNode()
+SweeperNode::SweeperNode(int col, int row)
 {
     nodeState = HIDDEN;
     mined = false;
-    nodeAlreadyChecked = false;
+    this->col = col;
+    this->row = row;
 }

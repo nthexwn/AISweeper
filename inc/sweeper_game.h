@@ -10,16 +10,34 @@ class SweeperGame : public QObject
 {
     Q_OBJECT
 public:
-    SweeperGame(bool useGui);
+    SweeperGame(bool showGameGui, bool unlockGameGui);
     ~SweeperGame();
-    void startGame();
+
+signals:
+    void triggerInputDisabled();
+    void triggerInputEnabled();
+
+public slots:
+    void doFlagAction(QPoint nodeIndex);
+    void doRevealAction(QPoint nodeIndex);
+    void doRevealAdjacentAction(QPoint nodeIndex);
 
 private:
+    bool firstReveal;
+    bool showGameGui;
+    bool unlockGameGui;
+    SweeperModel* sweeperModel;
     QFrame* frame;
     QVBoxLayout* layout;
-    SweeperModel* sweeperModel;
     SweeperWidget* sweeperWidget;
-    bool useGui;
+    SweeperNode::NODE_STATE countAdjacentMines(SweeperNode* node);
+    int countAdjacentFlagsHelper(SweeperNode* node);
+    int countAdjacentMinesHelper(SweeperNode* node);
+    void endGame();
+    void handleActionFinish();
+    void handleActionStart();
+    bool handleWinMechanics();
+    bool revealNode(SweeperNode* node);
 };
 
 #endif // SWEEPER_GAME_H

@@ -26,8 +26,9 @@ public:
     };
     NODE_STATE nodeState;
     bool mined;
-    bool nodeAlreadyChecked;
-    SweeperNode();
+    int col;
+    int row;
+    SweeperNode(int col, int row);
 };
 
 #endif // SWEEPER_NODE_H

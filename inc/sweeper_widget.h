@@ -14,13 +14,23 @@ public:
     virtual QSize sizeHint() const;
     static void unhookResources();
 
+signals:
+    void triggerFlagAction(QPoint);
+    void triggerRevealAction(QPoint);
+    void triggerRevealAdjacentAction(QPoint);
+
+public slots:
+    void disableInput();
+    void enableInput();
+
 protected:
+    void mouseMoveEvent(QMouseEvent* event);
     void mousePressEvent(QMouseEvent* event);
     void mouseReleaseEvent(QMouseEvent* event);
     void paintEvent(QPaintEvent* event);
 
 private:
-    SweeperNode* locateNodeUnderCursor();
+    bool inputEnabled;
     static bool mouseOnePressed;
     static bool mouseTwoPressed;
     static bool resourceHookingStarted;
@@ -42,6 +52,8 @@ private:
     static QPixmap* tileRevealedSix;
     static QPixmap* tileRevealedSeven;
     static QPixmap* tileRevealedEight;
+    QPoint calcCursorNodeIndex();
+    SweeperNode* calcNodeAtCursor();
 };
 
 #endif // SWEEPER_WIDGET_H

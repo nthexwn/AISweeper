@@ -23,6 +23,7 @@ QPixmap* SweeperWidget::tileRevealedEight;
 
 SweeperWidget::SweeperWidget(SweeperModel& sweeperModel, QWidget* parent) : QWidget(parent)
 {
+    inputEnabled = false;
     this->sweeperModel = &sweeperModel;
     if(!resourcesHooked && !resourceHookingStarted)
     {
@@ -40,7 +41,7 @@ void SweeperWidget::hookResources()
     tileFlagged = new QPixmap(":/tiles/flagged.png");
     tileHidden = new QPixmap(":/tiles/hidden.png");
     tileIncorrect = new QPixmap(":/tiles/incorrect.png");
-    tileMissedMine = new QPixmap(":/tiles/missedMine.png");
+    tileMissedMine = new QPixmap(":/tiles/missed_mine.png");
     tilePushed = new QPixmap(":/tiles/pushed.png");
     tileRevealed = new QPixmap(":/tiles/revealed.png");
     tileRevealedOne = new QPixmap(":/tiles/revealed_one.png");
@@ -84,6 +85,25 @@ void SweeperWidget::unhookResources()
     resourcesHooked = false;
 }
 
+void SweeperWidget::disableInput()
+{
+    inputEnabled = false;
+}
+
+void SweeperWidget::enableInput()
+{
+    inputEnabled = true;
+}
+
+void SweeperWidget::mouseMoveEvent(QMouseEvent* event)
+{
+    event->accept();
+    if(mouseOnePressed)
+    {
+        update();
+    }
+}
+
 void SweeperWidget::mousePressEvent(QMouseEvent* event)
 {
     event->accept();
@@ -96,6 +116,27 @@ void SweeperWidget::mousePressEvent(QMouseEvent* event)
     else if(button & Qt::RightButton)
     {
         mouseTwoPressed = true;
+        SweeperNode* node = calcNodeAtCursor();
+        SweeperNode::NODE_STATE nodeState = node->nodeState;
+        switch(nodeState)
+        {
+        case SweeperNode::FLAGGED:
+        case SweeperNode::HIDDEN:
+            emit triggerFlagAction(QPoint(node->col, node->row));
+            break;
+        case SweeperNode::REVEALED_ONE:
+        case SweeperNode::REVEALED_TWO:
+        case SweeperNode::REVEALED_THREE:
+        case SweeperNode::REVEALED_FOUR:
+        case SweeperNode::REVEALED_FIVE:
+        case SweeperNode::REVEALED_SIX:
+        case SweeperNode::REVEALED_SEVEN:
+        case SweeperNode::REVEALED_EIGHT:
+            emit triggerRevealAdjacentAction(QPoint(node->col, node->row));
+            break;
+        default:
+            break;
+        }
         update();
     }
 }
@@ -107,6 +148,7 @@ void SweeperWidget::mouseReleaseEvent(QMouseEvent* event)
     if(button & Qt::LeftButton)
     {
         mouseOnePressed = false;
+        emit triggerRevealAction(calcCursorNodeIndex());
         update();
     }
     else if(button & Qt::RightButton)
@@ -142,7 +184,7 @@ void SweeperWidget::paintEvent(QPaintEvent* event)
             horizStart = col * tileWidth + marginWidth;
             vertStart = row * tileHeight + marginHeight;
             tileRect = QRect(horizStart, vertStart, tileWidth, tileHeight);
-            node = sweeperModel->getNode(row, col);
+            node = sweeperModel->getNode(col, row);
             switch(node->nodeState)
             {
             case SweeperNode::CORRECT:
@@ -155,10 +197,14 @@ void SweeperWidget::paintEvent(QPaintEvent* event)
                 tilePixmap = tileFlagged;
                 break;
             case SweeperNode::HIDDEN:
-                if(mouseOnePressed && locateNodeUnderCursor() == node)
+                if(mouseOnePressed)
                 {
-                    tilePixmap = tilePushed;
-                    break;
+                    SweeperNode* nodeUnderCursor = calcNodeAtCursor();
+                    if(nodeUnderCursor == node)
+                    {
+                        tilePixmap = tilePushed;
+                        break;
+                    }
                 }
                 tilePixmap = tileHidden;
                 break;
@@ -201,7 +247,7 @@ void SweeperWidget::paintEvent(QPaintEvent* event)
     }
 }
 
-SweeperNode* SweeperWidget::locateNodeUnderCursor()
+QPoint SweeperWidget::calcCursorNodeIndex()
 {
     QPoint cursorPos = QCursor::pos();
     QPoint widgetPos = mapToGlobal(QPoint(0,0));
@@ -216,15 +262,22 @@ SweeperNode* SweeperWidget::locateNodeUnderCursor()
     int marginHeight = (widgetHeight - totalTileHeight) / 2;
     QPoint gridPos = QPoint(marginWidth, marginHeight) + widgetPos;
     QPoint relativePos = cursorPos - gridPos;
-    int row = relativePos.y() / tileHeight;
-    if(row < 0 || row >= sweeperModel->height)
-    {
-        return NULL;
-    }
     int col = relativePos.x() / tileWidth;
     if(col < 0 || col >= sweeperModel->width)
     {
-        return NULL;
+        return QPoint(-1, -1);
     }
-    return sweeperModel->getNode(row, col);
+    int row = relativePos.y() / tileHeight;
+    if(row < 0 || row >= sweeperModel->height)
+    {
+        return QPoint(-1, -1);
+    }
+    return QPoint(col, row);
+}
+
+SweeperNode* SweeperWidget::calcNodeAtCursor()
+{
+    QPoint nodeIndex = calcCursorNodeIndex();
+    SweeperNode* nodeUnderCursor = sweeperModel->getNode(nodeIndex.x(), nodeIndex.y());
+    return nodeUnderCursor;
 }
