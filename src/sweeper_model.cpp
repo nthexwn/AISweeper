@@ -50,63 +50,63 @@ SweeperModel::~SweeperModel()
 
 SweeperNode* SweeperModel::getNode(int col, int row)
 {
-    if(col < 0 || col >= width || row < 0 || row >= height) return NULL;
+    if(col < 0 || col >= width || row < 0 || row >= height) return nullptr;
     int index = col + row * width;
     return nodes[index];
 }
 
 SweeperNode* SweeperModel::getAboveLeftNode(SweeperNode* node)
 {
-    if(node->col < 1 || node->col >= width || node->row < 1 || node->row >= height) return NULL;
+    if(node->col < 1 || node->col >= width || node->row < 1 || node->row >= height) return nullptr;
     int index = node->col - 1 + (node->row - 1) * width;
     return nodes[index];
 }
 
 SweeperNode* SweeperModel::getAboveNode(SweeperNode* node)
 {
-    if(node->col < 0 || node->col >= width || node->row < 1 || node->row >= height) return NULL;
+    if(node->col < 0 || node->col >= width || node->row < 1 || node->row >= height) return nullptr;
     int index = node->col + (node->row - 1) * width;
     return nodes[index];
 }
 
 SweeperNode* SweeperModel::getAboveRightNode(SweeperNode* node)
 {
-    if(node->col < 0 || node->col >= width - 1 || node->row < 1 || node->row >= height) return NULL;
+    if(node->col < 0 || node->col >= width - 1 || node->row < 1 || node->row >= height) return nullptr;
     int index = node->col + 1 + (node->row - 1) * width;
     return nodes[index];
 }
 
 SweeperNode* SweeperModel::getLeftNode(SweeperNode* node)
 {
-    if(node->col < 1 || node->col >= width || node->row < 0 || node->row >= height) return NULL;
+    if(node->col < 1 || node->col >= width || node->row < 0 || node->row >= height) return nullptr;
     int index = node->col - 1 + node->row * width;
     return nodes[index];
 }
 
 SweeperNode* SweeperModel::getRightNode(SweeperNode* node)
 {
-    if(node->col < 0 || node->col >= width - 1 || node->row < 0 || node->row >= height) return NULL;
+    if(node->col < 0 || node->col >= width - 1 || node->row < 0 || node->row >= height) return nullptr;
     int index = node->col + 1 + node->row * width;
     return nodes[index];
 }
 
 SweeperNode* SweeperModel::getBelowLeftNode(SweeperNode* node)
 {
-    if(node->col < 1 || node->col >= width || node->row < 0 || node->row >= height - 1) return NULL;
+    if(node->col < 1 || node->col >= width || node->row < 0 || node->row >= height - 1) return nullptr;
     int index = node->col - 1 + (node->row + 1) * width;
     return nodes[index];
 }
 
 SweeperNode* SweeperModel::getBelowNode(SweeperNode* node)
 {
-    if(node->col < 0 || node->col >= width || node->row < 0 || node->row >= height - 1) return NULL;
+    if(node->col < 0 || node->col >= width || node->row < 0 || node->row >= height - 1) return nullptr;
     int index = node->col + (node->row + 1) * width;
     return nodes[index];
 }
 
 SweeperNode* SweeperModel::getBelowRightNode(SweeperNode* node)
 {
-    if(node->col < 0 || node->col >= width - 1 || node->row < 0 || node->row >= height - 1) return NULL;
+    if(node->col < 0 || node->col >= width - 1 || node->row < 0 || node->row >= height - 1) return nullptr;
     int index = node->col + 1 + (node->row + 1) * width;
     return nodes[index];
 }

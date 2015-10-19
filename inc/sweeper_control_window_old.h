@@ -1,15 +1,15 @@
-#ifndef SWEEPER_CONTROL_WINDOW_H
-#define SWEEPER_CONTROL_WINDOW_H
+#ifndef SWEEPER_CONTROL_WINDOW_OLD_H
+#define SWEEPER_CONTROL_WINDOW_OLD_H
 
 #include <QtWidgets>
 #include "sweeper_game.h"
 
-class SweeperControlWindow : public QMainWindow
+class SweeperControlWindowOld : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit SweeperControlWindow(QWidget* parent = 0);
-    ~SweeperControlWindow();
+    explicit SweeperControlWindowOld(QWidget* parent = 0);
+    ~SweeperControlWindowOld();
 
 public slots:
 
@@ -23,4 +23,4 @@ private slots:
     void launchButtonClicked();
 };
 
-#endif // SWEEPER_CONTROL_WINDOW_H
+#endif // SWEEPER_CONTROL_WINDOW_OLD_H

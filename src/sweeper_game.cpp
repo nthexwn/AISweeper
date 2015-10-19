@@ -36,7 +36,7 @@ void SweeperGame::doFlagAction(QPoint nodeIndex)
 {
     handleActionStart();
     SweeperNode* node = sweeperModel->getNode(nodeIndex.x(), nodeIndex.y());
-    if(node != NULL)
+    if(node != nullptr)
     {
         if(node->nodeState == SweeperNode::HIDDEN) node->nodeState = SweeperNode::FLAGGED;
         else if(node->nodeState == SweeperNode::FLAGGED) node->nodeState = SweeperNode::HIDDEN;
@@ -49,7 +49,7 @@ void SweeperGame::doRevealAction(QPoint nodeIndex)
     handleActionStart();
     SweeperNode* node = sweeperModel->getNode(nodeIndex.x(), nodeIndex.y());
     if(revealNode(node)) return;
-    if(node != NULL && handleWinMechanics()) return;
+    if(node != nullptr && handleWinMechanics()) return;
     handleActionFinish();
 }
 
@@ -57,7 +57,7 @@ void SweeperGame::doRevealAdjacentAction(QPoint nodeIndex)
 {
     handleActionStart();
     SweeperNode* node = sweeperModel->getNode(nodeIndex.x(), nodeIndex.y());
-    if(node != NULL)
+    if(node != nullptr)
     {
         int requiredAdjacentFlags = 0;
         switch(node->nodeState)
@@ -142,13 +142,13 @@ SweeperNode::NODE_STATE SweeperGame::countAdjacentMines(SweeperNode* node)
 
 int SweeperGame::countAdjacentFlagsHelper(SweeperNode* node)
 {
-    if(node != NULL && node->nodeState == SweeperNode::FLAGGED) return 1;
+    if(node != nullptr && node->nodeState == SweeperNode::FLAGGED) return 1;
     return 0;
 }
 
 int SweeperGame::countAdjacentMinesHelper(SweeperNode* node)
 {
-    if(node != NULL && node->mined) return 1;
+    if(node != nullptr && node->mined) return 1;
     return 0;
 }
 
@@ -203,7 +203,7 @@ bool SweeperGame::handleWinMechanics()
 
 bool SweeperGame::revealNode(SweeperNode* node)
 {
-    if(node == NULL || node->nodeState != SweeperNode::HIDDEN) return false;
+    if(node == nullptr || node->nodeState != SweeperNode::HIDDEN) return false;
     else if(node->mined)
     {
         if(firstReveal)
