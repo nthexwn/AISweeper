@@ -1,13 +1,12 @@
 #include <QApplication>
-#include "../inc/sweeper_control_window_old.h"
+#include "../inc/sweeper_control_window.h"
 
 int main(int argc, char* argv[])
 {   
     QApplication app(argc, argv);
 
-    SweeperControlWindowOld sweeperControlWindowOld;
-    sweeperControlWindowOld.setWindowTitle("AISweeper Controller Old");
-    sweeperControlWindowOld.show();
+    SweeperControlWindow sweeperControlWindow;
+    sweeperControlWindow.show();
 
     return app.exec();
 }

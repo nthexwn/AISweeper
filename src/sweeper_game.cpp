@@ -1,12 +1,12 @@
 #include "../inc/sweeper_common_functions.h"
 #include "../inc/sweeper_game.h"
 
-SweeperGame::SweeperGame(bool showGameGui, bool unlockGameGui)
+SweeperGame::SweeperGame(SweeperBatchSettings* batchSettings, QObject* parent) : QObject(parent)
 {
     firstReveal = true;
-    this->showGameGui = showGameGui;
-    this->unlockGameGui = unlockGameGui;
-    sweeperModel = new SweeperModel(16, 16, 40);
+    this->showGameGui = batchSettings->showGui;
+    this->unlockGameGui = batchSettings->unlockGui;
+    sweeperModel = new SweeperModel(batchSettings->width, batchSettings->height, batchSettings->mines);
     if(showGameGui)
     {
         sweeperWidget = new SweeperWidget(*sweeperModel);
@@ -20,7 +20,8 @@ SweeperGame::SweeperGame(bool showGameGui, bool unlockGameGui)
         connect(this, SIGNAL(triggerInputEnabled()), sweeperWidget, SLOT(enableInput()));
         connect(sweeperWidget, SIGNAL(triggerFlagAction(QPoint)), this, SLOT(doFlagAction(QPoint)));
         connect(sweeperWidget, SIGNAL(triggerRevealAction(QPoint)), this, SLOT(doRevealAction(QPoint)));
-        connect(sweeperWidget, SIGNAL(triggerRevealAdjacentAction(QPoint)), this, SLOT(doRevealAdjacentAction(QPoint)));
+        connect(sweeperWidget, SIGNAL(triggerRevealAdjacentAction(QPoint)),
+                this, SLOT(doRevealAdjacentAction(QPoint)));
         frame->show();
     }
     sweeperModel->gameState = SweeperModel::READY;

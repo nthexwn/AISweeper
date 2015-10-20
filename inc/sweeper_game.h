@@ -3,6 +3,7 @@
 
 #include <QFrame>
 #include <QVBoxLayout>
+#include "sweeper_batch_settings.h"
 #include "sweeper_model.h"
 #include "sweeper_widget.h"
 
@@ -10,7 +11,7 @@ class SweeperGame : public QObject
 {
     Q_OBJECT
 public:
-    SweeperGame(bool showGameGui, bool unlockGameGui);
+    SweeperGame(SweeperBatchSettings* batchSettings, QObject* parent = 0);
     ~SweeperGame();
 
 signals:

@@ -9,7 +9,7 @@ class SweeperWidget : public QWidget
 {
     Q_OBJECT
 public:
-    SweeperWidget(SweeperModel &sweeperModel, QWidget* parent = 0);
+    SweeperWidget(SweeperModel& sweeperModel, QWidget* parent = 0);
     static void hookResources();
     virtual QSize sizeHint() const;
     static void unhookResources();

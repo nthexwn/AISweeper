@@ -14,3 +14,12 @@ int SweeperCommonFunctions::getRandValInclusive(int low, int high)
     int rand = qrand() % ((high + 1) - low) + low;
     return rand;
 }
+
+void SweeperCommonFunctions::setWidgetColors(QWidget* widget, QColor baseColor, QColor textColor)
+{
+    if(widget == nullptr) return;
+    QPalette palette;
+    palette.setColor(QPalette::Base, baseColor);
+    palette.setColor(QPalette::Text, textColor);
+    widget->setPalette(palette);
+}
