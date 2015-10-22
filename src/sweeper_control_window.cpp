@@ -18,6 +18,7 @@ SweeperControlWindow::SweeperControlWindow(QWidget* parent) : QMainWindow(parent
 SweeperControlWindow::~SweeperControlWindow()
 {
     delete ui;
+    ui = nullptr;
     SweeperWidget::unhookResources();
 }
 
@@ -57,11 +58,11 @@ void SweeperControlWindow::doUpdateOverview(SweeperBatchStatus* latestBatchStatu
     }
 
     // Update games played
-    QString gamesPlayedString = batchStatus->gamesCompleted + "/" + batchStatus->totalGames;
+    QString gamesPlayedString = (QString)batchStatus->gamesCompleted + "/" + (QString)batchStatus->totalGames;
     ui->batchStateLineEdit->setText(gamesPlayedString);
 
     // Update games won
-    QString gamesWonString = batchStatus->gamesWon + "/" + batchStatus->gamesCompleted;
+    QString gamesWonString = (QString)batchStatus->gamesWon + "/" + (QString)batchStatus->gamesCompleted;
     if(batchStatus->gamesCompleted != 0)
     {
         int gamesWonPercentage = 100 * batchStatus->gamesWon / batchStatus->gamesCompleted;

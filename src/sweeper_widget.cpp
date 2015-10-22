@@ -67,21 +67,37 @@ QSize SweeperWidget::sizeHint() const
 void SweeperWidget::unhookResources()
 {
     delete tileCorrect;
+    tileCorrect = nullptr;
     delete tileDetonated;
+    tileDetonated = nullptr;
     delete tileFlagged;
+    tileFlagged = nullptr;
     delete tileHidden;
+    tileHidden = nullptr;
     delete tileIncorrect;
+    tileIncorrect = nullptr;
     delete tileMissedMine;
+    tileMissedMine = nullptr;
     delete tilePushed;
+    tilePushed = nullptr;
     delete tileRevealed;
+    tileRevealed = nullptr;
     delete tileRevealedOne;
+    tileRevealedOne = nullptr;
     delete tileRevealedTwo;
+    tileRevealedTwo = nullptr;
     delete tileRevealedThree;
+    tileRevealedThree = nullptr;
     delete tileRevealedFour;
+    tileRevealedFour = nullptr;
     delete tileRevealedFive;
+    tileRevealedFive = nullptr;
     delete tileRevealedSix;
+    tileRevealedSix = nullptr;
     delete tileRevealedSeven;
+    tileRevealedSeven = nullptr;
     delete tileRevealedEight;
+    tileRevealedEight = nullptr;
     resourcesHooked = false;
 }
 

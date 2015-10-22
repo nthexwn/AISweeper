@@ -30,7 +30,9 @@ SweeperGame::SweeperGame(SweeperBatchSettings* batchSettings, QObject* parent) :
 SweeperGame::~SweeperGame()
 {
     delete frame; // deleting the frame also seems to delete the layout
+    frame = nullptr;
     delete sweeperModel;
+    sweeperModel = nullptr;
 }
 
 void SweeperGame::doFlagAction(QPoint nodeIndex)

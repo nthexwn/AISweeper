@@ -45,7 +45,11 @@ SweeperModel::SweeperModel(int width, int height, int mines)
 
 SweeperModel::~SweeperModel()
 {
-    for(std::size_t i = 0; i < nodes.size(); i++) delete nodes[i];
+    for(std::size_t i = 0; i < nodes.size(); i++)
+    {
+        delete nodes[i];
+        nodes[i] = nullptr;
+    }
 }
 
 SweeperNode* SweeperModel::getNode(int col, int row)

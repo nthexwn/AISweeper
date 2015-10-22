@@ -21,6 +21,7 @@ signals:
 private:
     SweeperBatchStatus* batchStatus;
     bool batchTerminationRequested;
+    bool batchLaunchRequested;
     SweeperGame* sweeperGame;
 };
 

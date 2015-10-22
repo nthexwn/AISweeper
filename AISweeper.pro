@@ -27,6 +27,9 @@ HEADERS += \
     inc/sweeper_node.h \
     inc/sweeper_widget.h
 
+QMAKE_CXXFLAGS += \
+    -stdlib=libc++
+
 QT += \
     core gui
     greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -51,7 +54,7 @@ SOURCES += \
     src/sweeper_node.cpp \
     src/sweeper_widget.cpp
 
-TARGET += \
+TARGET = \
     AISweeper
 
 TEMPLATE += \
