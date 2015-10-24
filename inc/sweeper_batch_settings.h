@@ -19,7 +19,7 @@ public:
     int maxThreadCount;
     int mines;
     PLAYER_TYPE playerType;
-    double secondsPausePerAction;
+    unsigned long msPausePerAction;
     bool showGui;
     bool unlockGui;
     int width;

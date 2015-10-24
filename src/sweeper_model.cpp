@@ -4,7 +4,7 @@
 SweeperModel::SweeperModel(int width, int height, int mines)
 {
     // The game isn't ready to play yet.
-    this->gameState = SweeperModel::PROCESSING;
+    this->gameState = SweeperModel::UNFINISHED;
 
     // NOTE: No error checking is performed here since it is up to the SweeperControlWindow to validate the parameters
     // before the game object and model have been created.

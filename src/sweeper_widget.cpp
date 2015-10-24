@@ -21,10 +21,9 @@ QPixmap* SweeperWidget::tileRevealedSix;
 QPixmap* SweeperWidget::tileRevealedSeven;
 QPixmap* SweeperWidget::tileRevealedEight;
 
-SweeperWidget::SweeperWidget(SweeperModel& sweeperModel, QWidget* parent) : QWidget(parent)
+SweeperWidget::SweeperWidget(SweeperModel* sweeperModel, QWidget* parent) : QWidget(parent)
 {
-    inputEnabled = false;
-    this->sweeperModel = &sweeperModel;
+    this->sweeperModel = sweeperModel;
     if(!resourcesHooked && !resourceHookingStarted)
     {
         resourceHookingStarted = true;
@@ -32,6 +31,15 @@ SweeperWidget::SweeperWidget(SweeperModel& sweeperModel, QWidget* parent) : QWid
     }
     QSizePolicy sizePolicy = QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     setSizePolicy(sizePolicy);
+}
+
+QSize SweeperWidget::sizeHint() const
+{
+    int minTileWidth = tileHidden->width() / 2;
+    int minTileHeight = tileHidden->height() / 2;
+    int minWidgetWidth = minTileWidth * sweeperModel->width;
+    int minWidgetHeight = minTileHeight * sweeperModel->height;
+    return QSize(minWidgetWidth, minWidgetHeight);
 }
 
 void SweeperWidget::hookResources()
@@ -53,15 +61,6 @@ void SweeperWidget::hookResources()
     tileRevealedSeven = new QPixmap(":/tiles/revealed_seven.png");
     tileRevealedEight = new QPixmap(":/tiles/revealed_eight.png");
     resourcesHooked = true;
-}
-
-QSize SweeperWidget::sizeHint() const
-{
-    int minTileWidth = tileHidden->width() / 2;
-    int minTileHeight = tileHidden->height() / 2;
-    int minWidgetWidth = minTileWidth * sweeperModel->width;
-    int minWidgetHeight = minTileHeight * sweeperModel->height;
-    return QSize(minWidgetWidth, minWidgetHeight);
 }
 
 void SweeperWidget::unhookResources()
@@ -99,16 +98,6 @@ void SweeperWidget::unhookResources()
     delete tileRevealedEight;
     tileRevealedEight = nullptr;
     resourcesHooked = false;
-}
-
-void SweeperWidget::disableInput()
-{
-    inputEnabled = false;
-}
-
-void SweeperWidget::enableInput()
-{
-    inputEnabled = true;
 }
 
 void SweeperWidget::mouseMoveEvent(QMouseEvent* event)

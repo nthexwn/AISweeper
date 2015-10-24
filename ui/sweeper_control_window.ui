@@ -398,7 +398,7 @@
       <rect>
        <x>10</x>
        <y>20</y>
-       <width>81</width>
+       <width>71</width>
        <height>21</height>
       </rect>
      </property>
@@ -409,7 +409,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QComboBox" name="playerComboBox">
+    <widget class="QComboBox" name="playerTypeComboBox">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -439,7 +439,7 @@
       </property>
      </item>
     </widget>
-    <widget class="QLabel" name="perActionDelayLabel">
+    <widget class="QLabel" name="pausePerActionLabel">
      <property name="enabled">
       <bool>true</bool>
      </property>
@@ -502,7 +502,7 @@
       <bool>true</bool>
      </property>
     </widget>
-    <widget class="QDoubleSpinBox" name="perActionDelaySpinBox">
+    <widget class="QDoubleSpinBox" name="pausePerActionSpinBox">
      <property name="enabled">
       <bool>true</bool>
      </property>

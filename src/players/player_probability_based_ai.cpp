@@ -1,6 +1,12 @@
 #include "../../inc/players/player_probability_based_ai.h"
 
-PlayerProbabilityBasedAi::PlayerProbabilityBasedAi(QObject* parent) : QObject(parent)
+PlayerProbabilityBasedAi::PlayerProbabilityBasedAi(SweeperModel* sweeperModel, QObject* parent) :
+                                    PlayerAbstract(sweeperModel, parent)
 {
+    return;
+}
 
+void PlayerProbabilityBasedAi::takeNextAction()
+{
+    return;
 }

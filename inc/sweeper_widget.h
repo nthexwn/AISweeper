@@ -9,19 +9,16 @@ class SweeperWidget : public QWidget
 {
     Q_OBJECT
 public:
-    SweeperWidget(SweeperModel& sweeperModel, QWidget* parent = 0);
-    static void hookResources();
+    SweeperWidget(SweeperModel* sweeperModel, QWidget* parent = 0);
     virtual QSize sizeHint() const;
+    static void hookResources();
     static void unhookResources();
 
 signals:
     void triggerFlagAction(QPoint);
+    void triggerQuitAction();
     void triggerRevealAction(QPoint);
     void triggerRevealAdjacentAction(QPoint);
-
-public slots:
-    void disableInput();
-    void enableInput();
 
 protected:
     void mouseMoveEvent(QMouseEvent* event);
@@ -30,7 +27,6 @@ protected:
     void paintEvent(QPaintEvent* event);
 
 private:
-    bool inputEnabled;
     static bool mouseOnePressed;
     static bool mouseTwoPressed;
     static bool resourceHookingStarted;

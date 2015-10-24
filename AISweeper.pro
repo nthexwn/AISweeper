@@ -27,8 +27,13 @@ HEADERS += \
     inc/sweeper_node.h \
     inc/sweeper_widget.h
 
-QMAKE_CXXFLAGS += \
-    -stdlib=libc++
+#G++ fails to link when -stdlib=libc++ is included, but Clang requires it for C++14.  Unfortunately there don't seem
+#to be any compiler specific settings allowed, so making this setting Mac specific (where Clang is typically used) is
+#probably the best option for now.
+mac{
+    QMAKE_CXXFLAGS += \
+        -stdlib=libc++
+}
 
 QT += \
     core gui

@@ -2,12 +2,14 @@
 #define PLAYER_MACHINE_LEARNING_AI_H
 
 #include <QObject>
+#include "player_abstract.h"
 
-class PlayerMachineLearningAi : public QObject
+class PlayerMachineLearningAi : public PlayerAbstract
 {
     Q_OBJECT
 public:
-    explicit PlayerMachineLearningAi(QObject* parent = 0);
+    explicit PlayerMachineLearningAi(SweeperModel* sweeperModel, QObject* parent = 0);
+    void takeNextAction();
 };
 
 #endif // PLAYER_MACHINE_LEARNING_AI_H

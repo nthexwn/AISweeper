@@ -11,8 +11,7 @@ public:
     // Possible game states from a player's perspective.
     enum GAME_STATE
     {
-        PROCESSING,
-        READY,
+        UNFINISHED,
         LOST,
         WON,
     };

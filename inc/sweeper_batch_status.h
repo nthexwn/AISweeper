@@ -12,11 +12,10 @@ public:
         NOT_STARTED,
         IN_PROGRESS,
         COMPLETED,
-        TERMINATED,
-        UNKNOWN_ERROR
+        TERMINATED
     };
     BATCH_STATE batchState;
-    int gamesCompleted;
+    int gamesPlayed;
     int gamesWon;
     int totalGames;
     explicit SweeperBatchStatus(QObject* parent = 0);

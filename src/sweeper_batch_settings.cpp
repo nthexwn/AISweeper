@@ -7,7 +7,7 @@ SweeperBatchSettings::SweeperBatchSettings(QObject* parent) : QObject(parent)
     maxThreadCount = 1;
     mines = 10;
     playerType = SweeperBatchSettings::HUMAN;
-    secondsPausePerAction = 0.000;
+    msPausePerAction = 0;
     showGui = true;
     unlockGui = true;
     width = 9;
@@ -20,7 +20,7 @@ SweeperBatchSettings::SweeperBatchSettings(SweeperBatchSettings* batchSettings, 
     maxThreadCount = batchSettings->maxThreadCount;
     mines = batchSettings->mines;
     playerType = batchSettings->playerType;
-    secondsPausePerAction = batchSettings->secondsPausePerAction;
+    msPausePerAction = batchSettings->msPausePerAction;
     showGui = batchSettings->showGui;
     unlockGui = batchSettings->unlockGui;
     width = batchSettings->width;
@@ -33,7 +33,7 @@ void SweeperBatchSettings::copyTo(SweeperBatchSettings* batchSettings)
     batchSettings->maxThreadCount = maxThreadCount;
     batchSettings->mines = mines;
     batchSettings->playerType = playerType;
-    batchSettings->secondsPausePerAction = secondsPausePerAction;
+    batchSettings->msPausePerAction = msPausePerAction;
     batchSettings->showGui = showGui;
     batchSettings->unlockGui = unlockGui;
     batchSettings->width = width;

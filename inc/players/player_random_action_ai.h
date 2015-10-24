@@ -2,12 +2,14 @@
 #define PLAYER_RANDOM_ACTION_AI_H
 
 #include <QObject>
+#include "player_abstract.h"
 
-class PlayerRandomActionAi : public QObject
+class PlayerRandomActionAi : public PlayerAbstract
 {
     Q_OBJECT
 public:
-    explicit PlayerRandomActionAi(QObject* parent = 0);
+    explicit PlayerRandomActionAi(SweeperModel* sweeperModel, QObject* parent = 0);
+    void takeNextAction();
 };
 
 #endif // PLAYER_RANDOM_ACTION_AI_H

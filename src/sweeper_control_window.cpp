@@ -22,16 +22,8 @@ SweeperControlWindow::~SweeperControlWindow()
     SweeperWidget::unhookResources();
 }
 
-void SweeperControlWindow::doUpdateOverview(SweeperBatchStatus* latestBatchStatus)
+void SweeperControlWindow::doUpdateOverview(SweeperBatchStatus* batchStatus)
 {
-    // We copy the values from the latest batch status so that we don't have to worry about concurrency.  It's still
-    // possible that some of the values will be altered while we're copying them from the latest batch status, though
-    // any errors that this might cause would not be execution critical (IE: win percentage showing higher than it
-    // should for one game or the progress bar being one game further along than the gamesCompleted variable shows).
-    // It would be possible to solve this issue with a mutex lock, though this would hamper performance when running
-    // large batches containing numerous threads.
-    latestBatchStatus->copyTo(batchStatus);
-
     // Update state
     switch(batchStatus->batchState)
     {
@@ -49,28 +41,24 @@ void SweeperControlWindow::doUpdateOverview(SweeperBatchStatus* latestBatchStatu
             break;
         case SweeperBatchStatus::TERMINATED:
             ui->batchStateLineEdit->setText("Terminated");
-            SweeperCommonFunctions::setWidgetColors((QWidget*)ui->batchStateLineEdit, Qt::black, Qt::white);
-            break;
-        case SweeperBatchStatus::UNKNOWN_ERROR:
-            ui->batchStateLineEdit->setText("Unknown Error!");
             SweeperCommonFunctions::setWidgetColors((QWidget*)ui->batchStateLineEdit, Qt::red, Qt::black);
             break;
     }
 
     // Update games played
-    QString gamesPlayedString = (QString)batchStatus->gamesCompleted + "/" + (QString)batchStatus->totalGames;
+    QString gamesPlayedString = (QString)batchStatus->gamesPlayed + "/" + (QString)batchStatus->totalGames;
     ui->batchStateLineEdit->setText(gamesPlayedString);
 
     // Update games won
-    QString gamesWonString = (QString)batchStatus->gamesWon + "/" + (QString)batchStatus->gamesCompleted;
-    if(batchStatus->gamesCompleted != 0)
+    QString gamesWonString = (QString)batchStatus->gamesWon + "/" + (QString)batchStatus->gamesPlayed;
+    if(batchStatus->gamesPlayed != 0)
     {
-        int gamesWonPercentage = 100 * batchStatus->gamesWon / batchStatus->gamesCompleted;
+        int gamesWonPercentage = 100 * batchStatus->gamesWon / batchStatus->gamesPlayed;
         gamesWonString += " (" + (QString)gamesWonPercentage + "%)";
     }
 
     // Update progress
-    ui->batchProgressBar->setValue(batchStatus->gamesCompleted / batchStatus->totalGames);
+    ui->batchProgressBar->setValue(batchStatus->gamesPlayed / batchStatus->totalGames);
 }
 
 void SweeperControlWindow::disableSettings()
@@ -85,9 +73,9 @@ void SweeperControlWindow::disableSettings()
     ui->intermediateRadioButton->setEnabled(false);
     ui->minesLabel->setEnabled(false);
     ui->minesSpinBox->setEnabled(false);
-    ui->perActionDelayLabel->setEnabled(false);
-    ui->perActionDelaySpinBox->setEnabled(false);
-    ui->playerComboBox->setEnabled(false);
+    ui->pausePerActionLabel->setEnabled(false);
+    ui->pausePerActionSpinBox->setEnabled(false);
+    ui->playerTypeComboBox->setEnabled(false);
     ui->playerTypeLabel->setEnabled(false);
     ui->restoreDefaultSettingsButton->setEnabled(false);
     ui->restoreLastUsedSettingsButton->setEnabled(false);
@@ -111,9 +99,9 @@ void SweeperControlWindow::enableSettings()
     ui->intermediateRadioButton->setEnabled(true);
     ui->minesLabel->setEnabled(true);
     ui->minesSpinBox->setEnabled(true);
-    ui->perActionDelayLabel->setEnabled(true);
-    ui->perActionDelaySpinBox->setEnabled(true);
-    ui->playerComboBox->setEnabled(true);
+    ui->pausePerActionLabel->setEnabled(true);
+    ui->pausePerActionSpinBox->setEnabled(true);
+    ui->playerTypeComboBox->setEnabled(true);
     ui->playerTypeLabel->setEnabled(true);
     ui->restoreDefaultSettingsButton->setEnabled(true);
     ui->restoreLastUsedSettingsButton->setEnabled(true);
@@ -144,7 +132,7 @@ void SweeperControlWindow::on_batchButton_clicked()
     switch(batchStatus->batchState)
     {
         case SweeperBatchStatus::IN_PROGRESS:
-            batchManager->requestBatchTermination();
+            batchManager->terminateBatch();
             enableSettings();
             break;
         default:
@@ -214,14 +202,39 @@ void SweeperControlWindow::on_minesSpinBox_valueChanged(int mines)
     batchSettings->mines = mines;
 }
 
-void SweeperControlWindow::on_perActionDelaySpinBox_valueChanged(double perActionDelay)
+void SweeperControlWindow::on_pausePerActionSpinBox_valueChanged(double secondsPausePerAction)
 {
-    batchSettings->secondsPausePerAction = perActionDelay;
+    batchSettings->msPausePerAction = secondsPausePerAction / 1000;
 }
 
-void SweeperControlWindow::on_playerComboBox_activated(int playerTypeIndex)
+void SweeperControlWindow::on_playerTypeComboBox_activated(int playerTypeIndex)
 {
     batchSettings->playerType = SweeperBatchSettings::PLAYER_TYPE(playerTypeIndex);
+    if(batchSettings->playerType == SweeperBatchSettings::HUMAN)
+    {
+        ui->unlockGuiCheckBox->setChecked(true);
+        batchSettings->unlockGui = true;
+    }
+    else
+    {
+        ui->unlockGuiCheckBox->setChecked(false);
+        batchSettings->unlockGui = false;
+    }
+}
+
+void SweeperControlWindow::on_playerTypeComboBox_currentIndexChanged(int playerTypeIndex)
+{
+    batchSettings->playerType = SweeperBatchSettings::PLAYER_TYPE(playerTypeIndex);
+    if(batchSettings->playerType == SweeperBatchSettings::HUMAN)
+    {
+        ui->unlockGuiCheckBox->setChecked(true);
+        batchSettings->unlockGui = true;
+    }
+    else
+    {
+        ui->unlockGuiCheckBox->setChecked(false);
+        batchSettings->unlockGui = false;
+    }
 }
 
 void SweeperControlWindow::on_restoreDefaultSettingsButton_clicked()
@@ -263,8 +276,8 @@ void SweeperControlWindow::restoreSettingsHelper()
     ui->maxThreadCountSpinBox->setValue(batchSettings->maxThreadCount);
     ui->minesSpinBox->setValue(batchSettings->mines);
     ui->minesSpinBox->setEnabled(true);
-    ui->perActionDelaySpinBox->setValue(batchSettings->secondsPausePerAction);
-    ui->playerComboBox->setCurrentIndex(batchSettings->playerType);
+    ui->pausePerActionSpinBox->setValue(batchSettings->msPausePerAction);
+    ui->playerTypeComboBox->setCurrentIndex(batchSettings->playerType);
     ui->showGuiCheckBox->setChecked(batchSettings->showGui);
     ui->unlockGuiCheckBox->setChecked(batchSettings->unlockGui);
     ui->widthSpinBox->setValue(batchSettings->width);

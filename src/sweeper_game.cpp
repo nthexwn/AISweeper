@@ -3,62 +3,89 @@
 
 SweeperGame::SweeperGame(SweeperBatchSettings* batchSettings, QObject* parent) : QObject(parent)
 {
+    this->batchSettings = batchSettings;
+    return;
+}
+
+SweeperGame::~SweeperGame()
+{
+    delete frame; // deleting the frame also seems to delete the layout
+    delete sweeperWidget;
+    delete player;
+    delete sweeperModel;
+}
+
+void SweeperGame::doBeginGame()
+{
     firstReveal = true;
-    this->showGameGui = batchSettings->showGui;
-    this->unlockGameGui = batchSettings->unlockGui;
     sweeperModel = new SweeperModel(batchSettings->width, batchSettings->height, batchSettings->mines);
-    if(showGameGui)
+    switch(batchSettings->playerType)
     {
-        sweeperWidget = new SweeperWidget(*sweeperModel);
+    case SweeperBatchSettings::HUMAN:
+        player = new PlayerHuman(sweeperModel);
+        break;
+    case SweeperBatchSettings::RANDOM_ACTION_AI:
+        player = new PlayerRandomActionAi(sweeperModel);
+        break;
+    case SweeperBatchSettings::PROBABILITY_BASED_AI:
+        player = new PlayerProbabilityBasedAi(sweeperModel);
+        break;
+    case SweeperBatchSettings::MACHINE_LEARNING_AI:
+        player = new PlayerMachineLearningAi(sweeperModel);
+        break;
+    }
+    if(batchSettings->showGui)
+    {
+        sweeperWidget = new SweeperWidget(sweeperModel);
         frame = new QFrame();
         frame->setFrameShape(QFrame::Panel);
         layout = new QVBoxLayout();
         layout->setMargin(0);
         frame->setLayout(layout);
         layout->addWidget(sweeperWidget);
-        connect(this, SIGNAL(triggerInputDisabled()), sweeperWidget, SLOT(disableInput()));
-        connect(this, SIGNAL(triggerInputEnabled()), sweeperWidget, SLOT(enableInput()));
         connect(sweeperWidget, SIGNAL(triggerFlagAction(QPoint)), this, SLOT(doFlagAction(QPoint)));
         connect(sweeperWidget, SIGNAL(triggerRevealAction(QPoint)), this, SLOT(doRevealAction(QPoint)));
         connect(sweeperWidget, SIGNAL(triggerRevealAdjacentAction(QPoint)),
                 this, SLOT(doRevealAdjacentAction(QPoint)));
         frame->show();
     }
-    sweeperModel->gameState = SweeperModel::READY;
-}
-
-SweeperGame::~SweeperGame()
-{
-    delete frame; // deleting the frame also seems to delete the layout
-    frame = nullptr;
-    delete sweeperModel;
-    sweeperModel = nullptr;
+    connect(player, SIGNAL(triggerFlagAction(QPoint)), this, SLOT(doFlagAction(QPoint)));
+    connect(player, SIGNAL(triggerQuitAction()), this, SLOT(doQuitAction()));
+    connect(player, SIGNAL(triggerRevealAction(QPoint)), this, SLOT(doRevealAction(QPoint)));
+    connect(player, SIGNAL(triggerRevealAdjacentAction(QPoint)), this, SLOT(doRevealAdjacentAction(QPoint)));
+    connect(this, SIGNAL(triggerTakeNextAction()), player, SLOT(doTakeNextAction()));
+    handlePauseAndTakeNextAction();
 }
 
 void SweeperGame::doFlagAction(QPoint nodeIndex)
 {
-    handleActionStart();
     SweeperNode* node = sweeperModel->getNode(nodeIndex.x(), nodeIndex.y());
     if(node != nullptr)
     {
         if(node->nodeState == SweeperNode::HIDDEN) node->nodeState = SweeperNode::FLAGGED;
         else if(node->nodeState == SweeperNode::FLAGGED) node->nodeState = SweeperNode::HIDDEN;
     }
-    handleActionFinish();
+    handlePauseAndTakeNextAction();
+}
+
+void SweeperGame::doQuitAction()
+{
+    emit triggerEndGame(this);
 }
 
 void SweeperGame::doRevealAction(QPoint nodeIndex)
 {
-    handleActionStart();
     SweeperNode* node = sweeperModel->getNode(nodeIndex.x(), nodeIndex.y());
-    if(revealNode(node)) return;
-    if(node != nullptr && handleWinMechanics()) return;
-    handleActionFinish();
+    if(node != nullptr)
+    {
+        revealNode(node);
+        handleWinMechanics();
+    }
+    handlePauseAndTakeNextAction();
 }
 
 void SweeperGame::doRevealAdjacentAction(QPoint nodeIndex)
 {
-    handleActionStart();
     SweeperNode* node = sweeperModel->getNode(nodeIndex.x(), nodeIndex.y());
     if(node != nullptr)
     {
@@ -103,20 +130,30 @@ void SweeperGame::doRevealAdjacentAction(QPoint nodeIndex)
         adjacentFlags += countAdjacentFlagsHelper(sweeperModel->getBelowRightNode(node));
         if(adjacentFlags == requiredAdjacentFlags)
         {
-            if(revealNode(sweeperModel->getAboveLeftNode(node))) return;
-            if(revealNode(sweeperModel->getAboveNode(node))) return;
-            if(revealNode(sweeperModel->getAboveRightNode(node))) return;
-            if(revealNode(sweeperModel->getLeftNode(node))) return;
-            if(revealNode(sweeperModel->getRightNode(node))) return;
-            if(revealNode(sweeperModel->getBelowLeftNode(node))) return;
-            if(revealNode(sweeperModel->getBelowNode(node))) return;
-            if(revealNode(sweeperModel->getBelowRightNode(node))) return;
-            if(handleWinMechanics()) return;
+            bool gameOver = false;
+            revealNode(sweeperModel->getAboveLeftNode(node));
+            if(sweeperModel->gameState == SweeperModel::LOST) gameOver = true;
+            if(!gameOver) revealNode(sweeperModel->getAboveNode(node));
+            if(sweeperModel->gameState == SweeperModel::LOST) gameOver = true;
+            if(!gameOver) revealNode(sweeperModel->getAboveRightNode(node));
+            if(sweeperModel->gameState == SweeperModel::LOST) gameOver = true;
+            if(!gameOver) revealNode(sweeperModel->getLeftNode(node));
+            if(sweeperModel->gameState == SweeperModel::LOST) gameOver = true;
+            if(!gameOver) revealNode(sweeperModel->getRightNode(node));
+            if(sweeperModel->gameState == SweeperModel::LOST) gameOver = true;
+            if(!gameOver) revealNode(sweeperModel->getBelowLeftNode(node));
+            if(sweeperModel->gameState == SweeperModel::LOST) gameOver = true;
+            if(!gameOver) revealNode(sweeperModel->getBelowNode(node));
+            if(sweeperModel->gameState == SweeperModel::LOST) gameOver = true;
+            if(!gameOver) revealNode(sweeperModel->getBelowRightNode(node));
+            if(sweeperModel->gameState == SweeperModel::LOST) gameOver = true;
+            if(!gameOver) handleWinMechanics();
         }
     }
-    handleActionFinish();
+    handlePauseAndTakeNextAction();
 }
 
+// The returned SweeperNode::NODE_STATE is the state which we will be assigning based on the number of mines found.
 SweeperNode::NODE_STATE SweeperGame::countAdjacentMines(SweeperNode* node)
 {
     int mineCount = 0;
@@ -155,7 +192,7 @@ int SweeperGame::countAdjacentMinesHelper(SweeperNode* node)
     return 0;
 }
 
-void SweeperGame::endGame()
+void SweeperGame::revealAllMines()
 {
     for(int i = 0; i < (int)sweeperModel->nodes.size(); i++)
     {
@@ -176,37 +213,9 @@ void SweeperGame::endGame()
     }
 }
 
-void SweeperGame::handleActionFinish()
+void SweeperGame::revealNode(SweeperNode* node)
 {
-    sweeperModel->gameState = SweeperModel::READY;
-    if(showGameGui && unlockGameGui) emit triggerInputEnabled();
-}
-
-void SweeperGame::handleActionStart()
-{
-    if(showGameGui) emit triggerInputDisabled();
-    sweeperModel->gameState = SweeperModel::PROCESSING;
-}
-
-bool SweeperGame::handleWinMechanics()
-{
-    for(int i = 0; i < (int)sweeperModel->nodes.size(); i++)
-    {
-        SweeperNode* node = sweeperModel->nodes[i];
-        if(!node->mined)
-        {
-            SweeperNode::NODE_STATE nodeState = node->nodeState;
-            if((nodeState == SweeperNode::HIDDEN || nodeState == SweeperNode::FLAGGED)) return false;
-        }
-    }
-    sweeperModel->gameState = SweeperModel::WON;
-    endGame();
-    return true;
-}
-
-bool SweeperGame::revealNode(SweeperNode* node)
-{
-    if(node == nullptr || node->nodeState != SweeperNode::HIDDEN) return false;
+    if(node == nullptr || node->nodeState != SweeperNode::HIDDEN) return;
     else if(node->mined)
     {
         if(firstReveal)
@@ -234,8 +243,8 @@ bool SweeperGame::revealNode(SweeperNode* node)
         {
             node->nodeState = SweeperNode::DETONATED;
             sweeperModel->gameState = SweeperModel::LOST;
-            endGame();
-            return true;
+            revealAllMines();
+            return;
         }
     }
     firstReveal = false;
@@ -243,14 +252,36 @@ bool SweeperGame::revealNode(SweeperNode* node)
     node->nodeState = nodeState;
     if(nodeState == SweeperNode::REVEALED)
     {
-        if(revealNode(sweeperModel->getAboveLeftNode(node))) return true;
-        if(revealNode(sweeperModel->getAboveNode(node))) return true;
-        if(revealNode(sweeperModel->getAboveRightNode(node))) return true;
-        if(revealNode(sweeperModel->getLeftNode(node))) return true;
-        if(revealNode(sweeperModel->getRightNode(node))) return true;
-        if(revealNode(sweeperModel->getBelowLeftNode(node))) return true;
-        if(revealNode(sweeperModel->getBelowNode(node))) return true;
-        if(revealNode(sweeperModel->getBelowRightNode(node))) return true;
+        revealNode(sweeperModel->getAboveLeftNode(node));
+        revealNode(sweeperModel->getAboveNode(node));
+        revealNode(sweeperModel->getAboveRightNode(node));
+        revealNode(sweeperModel->getLeftNode(node));
+        revealNode(sweeperModel->getRightNode(node));
+        revealNode(sweeperModel->getBelowLeftNode(node));
+        revealNode(sweeperModel->getBelowNode(node));
+        revealNode(sweeperModel->getBelowRightNode(node));
     }
-    return false;
+    return;
+}
+
+void SweeperGame::handlePauseAndTakeNextAction()
+{
+    QThread::msleep(batchSettings->msPausePerAction);
+    emit triggerTakeNextAction();
+}
+
+void SweeperGame::handleWinMechanics()
+{
+    for(int i = 0; i < (int)sweeperModel->nodes.size(); i++)
+    {
+        SweeperNode* node = sweeperModel->nodes[i];
+        if(!node->mined)
+        {
+            SweeperNode::NODE_STATE nodeState = node->nodeState;
+            if((nodeState == SweeperNode::HIDDEN || nodeState == SweeperNode::FLAGGED)) return;
+        }
+    }
+    sweeperModel->gameState = SweeperModel::WON;
+    revealAllMines();
+    return;
 }
