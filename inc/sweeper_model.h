@@ -22,15 +22,15 @@ public:
     std::vector<SweeperNode*> nodes;
     SweeperModel(int width, int height, int mines);
     ~SweeperModel();
-    SweeperNode* getNode(int col, int row);
-    SweeperNode* getAboveLeftNode(SweeperNode* node);
-    SweeperNode* getAboveNode(SweeperNode* node);
-    SweeperNode* getAboveRightNode(SweeperNode* node);
-    SweeperNode* getLeftNode(SweeperNode* node);
-    SweeperNode* getRightNode(SweeperNode* node);
-    SweeperNode* getBelowLeftNode(SweeperNode* node);
-    SweeperNode* getBelowNode(SweeperNode* node);
-    SweeperNode* getBelowRightNode(SweeperNode* node);
+    SweeperNode* getNode(int col, int row) const;
+    SweeperNode* getAboveLeftNode(SweeperNode* node) const;
+    SweeperNode* getAboveNode(SweeperNode* node) const;
+    SweeperNode* getAboveRightNode(SweeperNode* node) const;
+    SweeperNode* getLeftNode(SweeperNode* node) const;
+    SweeperNode* getRightNode(SweeperNode* node) const;
+    SweeperNode* getBelowLeftNode(SweeperNode* node) const;
+    SweeperNode* getBelowNode(SweeperNode* node) const;
+    SweeperNode* getBelowRightNode(SweeperNode* node) const;
 };
 
 #endif // SWEEPER_MODEL_H

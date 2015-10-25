@@ -7,7 +7,7 @@ class SweeperCommonFunctions
 {
 public:
     static int getRandValInclusive(int low, int high);
-    static void setWidgetColors(QWidget* widget, QColor baseColor, QColor textColor);
+    static void setWidgetPaletteColors(QWidget* widget, QColor baseColor, QColor textColor);
 
 private:
     static bool qrandSeeded;

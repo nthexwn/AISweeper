@@ -15,7 +15,7 @@ int SweeperCommonFunctions::getRandValInclusive(int low, int high)
     return rand;
 }
 
-void SweeperCommonFunctions::setWidgetColors(QWidget* widget, QColor baseColor, QColor textColor)
+void SweeperCommonFunctions::setWidgetPaletteColors(QWidget* widget, QColor baseColor, QColor textColor)
 {
     if(widget == nullptr) return;
     QPalette palette;

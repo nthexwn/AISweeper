@@ -52,63 +52,63 @@ SweeperModel::~SweeperModel()
     }
 }
 
-SweeperNode* SweeperModel::getNode(int col, int row)
+SweeperNode* SweeperModel::getNode(int col, int row) const
 {
     if(col < 0 || col >= width || row < 0 || row >= height) return nullptr;
     int index = col + row * width;
     return nodes[index];
 }
 
-SweeperNode* SweeperModel::getAboveLeftNode(SweeperNode* node)
+SweeperNode* SweeperModel::getAboveLeftNode(SweeperNode* node) const
 {
     if(node->col < 1 || node->col >= width || node->row < 1 || node->row >= height) return nullptr;
     int index = node->col - 1 + (node->row - 1) * width;
     return nodes[index];
 }
 
-SweeperNode* SweeperModel::getAboveNode(SweeperNode* node)
+SweeperNode* SweeperModel::getAboveNode(SweeperNode* node) const
 {
     if(node->col < 0 || node->col >= width || node->row < 1 || node->row >= height) return nullptr;
     int index = node->col + (node->row - 1) * width;
     return nodes[index];
 }
 
-SweeperNode* SweeperModel::getAboveRightNode(SweeperNode* node)
+SweeperNode* SweeperModel::getAboveRightNode(SweeperNode* node) const
 {
     if(node->col < 0 || node->col >= width - 1 || node->row < 1 || node->row >= height) return nullptr;
     int index = node->col + 1 + (node->row - 1) * width;
     return nodes[index];
 }
 
-SweeperNode* SweeperModel::getLeftNode(SweeperNode* node)
+SweeperNode* SweeperModel::getLeftNode(SweeperNode* node) const
 {
     if(node->col < 1 || node->col >= width || node->row < 0 || node->row >= height) return nullptr;
     int index = node->col - 1 + node->row * width;
     return nodes[index];
 }
 
-SweeperNode* SweeperModel::getRightNode(SweeperNode* node)
+SweeperNode* SweeperModel::getRightNode(SweeperNode* node) const
 {
     if(node->col < 0 || node->col >= width - 1 || node->row < 0 || node->row >= height) return nullptr;
     int index = node->col + 1 + node->row * width;
     return nodes[index];
 }
 
-SweeperNode* SweeperModel::getBelowLeftNode(SweeperNode* node)
+SweeperNode* SweeperModel::getBelowLeftNode(SweeperNode* node) const
 {
     if(node->col < 1 || node->col >= width || node->row < 0 || node->row >= height - 1) return nullptr;
     int index = node->col - 1 + (node->row + 1) * width;
     return nodes[index];
 }
 
-SweeperNode* SweeperModel::getBelowNode(SweeperNode* node)
+SweeperNode* SweeperModel::getBelowNode(SweeperNode* node) const
 {
     if(node->col < 0 || node->col >= width || node->row < 0 || node->row >= height - 1) return nullptr;
     int index = node->col + (node->row + 1) * width;
     return nodes[index];
 }
 
-SweeperNode* SweeperModel::getBelowRightNode(SweeperNode* node)
+SweeperNode* SweeperModel::getBelowRightNode(SweeperNode* node) const
 {
     if(node->col < 0 || node->col >= width - 1 || node->row < 0 || node->row >= height - 1) return nullptr;
     int index = node->col + 1 + (node->row + 1) * width;

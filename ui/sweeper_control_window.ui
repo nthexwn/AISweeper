@@ -53,8 +53,8 @@
      <rect>
       <x>360</x>
       <y>250</y>
-      <width>181</width>
-      <height>20</height>
+      <width>171</width>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
@@ -66,7 +66,7 @@
      <rect>
       <x>360</x>
       <y>220</y>
-      <width>181</width>
+      <width>171</width>
       <height>21</height>
      </rect>
     </property>

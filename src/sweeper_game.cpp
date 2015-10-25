@@ -1,17 +1,15 @@
+#include <QThread>
 #include "../inc/sweeper_common_functions.h"
 #include "../inc/sweeper_game.h"
 
-SweeperGame::SweeperGame(SweeperBatchSettings* batchSettings, QObject* parent) : QObject(parent)
+SweeperGame::SweeperGame(int index, SweeperBatchSettings* batchSettings, QObject* parent) : QObject(parent)
 {
+    this->index = index;
     this->batchSettings = batchSettings;
-    return;
 }
 
 SweeperGame::~SweeperGame()
 {
-    delete frame; // deleting the frame also seems to delete the layout
-    delete sweeperWidget;
-    delete player;
     delete sweeperModel;
 }
 
@@ -19,35 +17,21 @@ void SweeperGame::doBeginGame()
 {
     firstReveal = true;
     sweeperModel = new SweeperModel(batchSettings->width, batchSettings->height, batchSettings->mines);
+    if(batchSettings->showGui) emit triggerSpawnGui(index, sweeperModel);
     switch(batchSettings->playerType)
     {
     case SweeperBatchSettings::HUMAN:
-        player = new PlayerHuman(sweeperModel);
+        player = new PlayerHuman(sweeperModel, this);
         break;
     case SweeperBatchSettings::RANDOM_ACTION_AI:
-        player = new PlayerRandomActionAi(sweeperModel);
+        player = new PlayerRandomActionAi(sweeperModel, this);
         break;
     case SweeperBatchSettings::PROBABILITY_BASED_AI:
-        player = new PlayerProbabilityBasedAi(sweeperModel);
+        player = new PlayerProbabilityBasedAi(sweeperModel, this);
         break;
     case SweeperBatchSettings::MACHINE_LEARNING_AI:
-        player = new PlayerMachineLearningAi(sweeperModel);
+        player = new PlayerMachineLearningAi(sweeperModel, this);
         break;
-    }
-    if(batchSettings->showGui)
-    {
-        sweeperWidget = new SweeperWidget(sweeperModel);
-        frame = new QFrame();
-        frame->setFrameShape(QFrame::Panel);
-        layout = new QVBoxLayout();
-        layout->setMargin(0);
-        frame->setLayout(layout);
-        layout->addWidget(sweeperWidget);
-        connect(sweeperWidget, SIGNAL(triggerFlagAction(QPoint)), this, SLOT(doFlagAction(QPoint)));
-        connect(sweeperWidget, SIGNAL(triggerRevealAction(QPoint)), this, SLOT(doRevealAction(QPoint)));
-        connect(sweeperWidget, SIGNAL(triggerRevealAdjacentAction(QPoint)),
-                this, SLOT(doRevealAdjacentAction(QPoint)));
-        frame->show();
     }
     connect(player, SIGNAL(triggerFlagAction(QPoint)), this, SLOT(doFlagAction(QPoint)));
     connect(player, SIGNAL(triggerQuitAction()), this, SLOT(doQuitAction()));
@@ -70,7 +54,8 @@ void SweeperGame::doFlagAction(QPoint nodeIndex)
 
 void SweeperGame::doQuitAction()
 {
-    emit triggerEndGame(this);
+    if(batchSettings->showGui) emit triggerKillGui(index);
+    emit triggerEndOfGame(index, sweeperModel->gameState);
 }
 
 void SweeperGame::doRevealAction(QPoint nodeIndex)
@@ -153,6 +138,12 @@ void SweeperGame::doRevealAdjacentAction(QPoint nodeIndex)
     handlePauseAndTakeNextAction();
 }
 
+int SweeperGame::countAdjacentFlagsHelper(SweeperNode* node)
+{
+    if(node != nullptr && node->nodeState == SweeperNode::FLAGGED) return 1;
+    return 0;
+}
+
 // The returned SweeperNode::NODE_STATE is the state which we will be assigning based on the number of mines found.
 SweeperNode::NODE_STATE SweeperGame::countAdjacentMines(SweeperNode* node)
 {
@@ -180,16 +171,32 @@ SweeperNode::NODE_STATE SweeperGame::countAdjacentMines(SweeperNode* node)
     }
 }
 
-int SweeperGame::countAdjacentFlagsHelper(SweeperNode* node)
-{
-    if(node != nullptr && node->nodeState == SweeperNode::FLAGGED) return 1;
-    return 0;
-}
-
 int SweeperGame::countAdjacentMinesHelper(SweeperNode* node)
 {
     if(node != nullptr && node->mined) return 1;
     return 0;
+}
+
+void SweeperGame::handlePauseAndTakeNextAction()
+{
+    QThread::msleep(batchSettings->msPausePerAction);
+    emit triggerTakeNextAction();
+}
+
+void SweeperGame::handleWinMechanics()
+{
+    for(int i = 0; i < (int)sweeperModel->nodes.size(); i++)
+    {
+        SweeperNode* node = sweeperModel->nodes[i];
+        if(!node->mined)
+        {
+            SweeperNode::NODE_STATE nodeState = node->nodeState;
+            if((nodeState == SweeperNode::HIDDEN || nodeState == SweeperNode::FLAGGED)) return;
+        }
+    }
+    sweeperModel->gameState = SweeperModel::WON;
+    revealAllMines();
+    return;
 }
 
 void SweeperGame::revealAllMines()
@@ -261,27 +268,5 @@ void SweeperGame::revealNode(SweeperNode* node)
         revealNode(sweeperModel->getBelowNode(node));
         revealNode(sweeperModel->getBelowRightNode(node));
     }
-    return;
-}
-
-void SweeperGame::handlePauseAndTakeNextAction()
-{
-    QThread::msleep(batchSettings->msPausePerAction);
-    emit triggerTakeNextAction();
-}
-
-void SweeperGame::handleWinMechanics()
-{
-    for(int i = 0; i < (int)sweeperModel->nodes.size(); i++)
-    {
-        SweeperNode* node = sweeperModel->nodes[i];
-        if(!node->mined)
-        {
-            SweeperNode::NODE_STATE nodeState = node->nodeState;
-            if((nodeState == SweeperNode::HIDDEN || nodeState == SweeperNode::FLAGGED)) return;
-        }
-    }
-    sweeperModel->gameState = SweeperModel::WON;
-    revealAllMines();
     return;
 }

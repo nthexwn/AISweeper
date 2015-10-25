@@ -1,8 +1,6 @@
 #ifndef SWEEPER_GAME_H
 #define SWEEPER_GAME_H
 
-#include <QFrame>
-#include <QVBoxLayout>
 #include "./players/player_abstract.h"
 #include "./players/player_human.h"
 #include "./players/player_machine_learning_ai.h"
@@ -10,18 +8,20 @@
 #include "./players/player_random_action_ai.h"
 #include "sweeper_batch_settings.h"
 #include "sweeper_model.h"
-#include "sweeper_widget.h"
 
 class SweeperGame : public QObject
 {
     Q_OBJECT
 public:
+    int index;
     SweeperModel* sweeperModel;
-    SweeperGame(SweeperBatchSettings* batchSettings, QObject* parent = 0);
+    SweeperGame(int index, SweeperBatchSettings* batchSettings, QObject* parent = 0);
     ~SweeperGame();
 
 signals:
-    void triggerEndGame(SweeperGame* thisGame);
+    void triggerEndOfGame(int index, SweeperModel::GAME_STATE gameState);
+    void triggerKillGui(int index);
+    void triggerSpawnGui(int index, SweeperModel* sweeperModel);
     void triggerTakeNextAction();
 
 public slots:
@@ -32,19 +32,16 @@ public slots:
     void doRevealAdjacentAction(QPoint nodeIndex);
 
 private:
-    bool firstReveal;
     SweeperBatchSettings* batchSettings;
+    bool firstReveal;
     PlayerAbstract* player;
-    QFrame* frame;
-    QVBoxLayout* layout;
-    SweeperWidget* sweeperWidget;
-    SweeperNode::NODE_STATE countAdjacentMines(SweeperNode* node);
     int countAdjacentFlagsHelper(SweeperNode* node);
+    SweeperNode::NODE_STATE countAdjacentMines(SweeperNode* node);
     int countAdjacentMinesHelper(SweeperNode* node);
-    void revealAllMines();
-    void revealNode(SweeperNode* node);
     void handlePauseAndTakeNextAction();
     void handleWinMechanics();
+    void revealAllMines();
+    void revealNode(SweeperNode* node);
 };
 
 #endif // SWEEPER_GAME_H

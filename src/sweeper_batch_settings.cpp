@@ -3,14 +3,14 @@
 SweeperBatchSettings::SweeperBatchSettings(QObject* parent) : QObject(parent)
 {
     gameCount = 1;
-    height = 9;
+    height = SweeperBatchSettings::BEGINNER_HEIGHT;
     maxThreadCount = 1;
-    mines = 10;
+    mines = SweeperBatchSettings::BEGINNER_MINES;
     playerType = SweeperBatchSettings::HUMAN;
     msPausePerAction = 0;
     showGui = true;
     unlockGui = true;
-    width = 9;
+    width = SweeperBatchSettings::BEGINNER_WIDTH;
 }
 
 SweeperBatchSettings::SweeperBatchSettings(SweeperBatchSettings* batchSettings, QObject* parent) : QObject(parent)
