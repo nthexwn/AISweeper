@@ -16,11 +16,26 @@ class SweeperBatchManager : public QObject
 public:
     struct GameGroup
     {
-        QFrame* frame;
-        QVBoxLayout* layout;
-        SweeperGame* sweeperGame;
-        SweeperWidget* sweeperWidget;
-        QThread* thread;
+        bool acceptSignalsFromGame;
+        QPointer<QFrame> frame;
+        bool frameIsAlive;
+        QPointer<QVBoxLayout> layout;
+        bool layoutIsAlive;
+        QPointer<SweeperGame> sweeperGame;
+        bool sweeperGameIsAlive;
+        QPointer<SweeperWidget> sweeperWidget;
+        bool sweeperWidgetIsAlive;
+        QPointer<QThread> thread;
+        bool threadIsAlive;
+        GameGroup()
+        {
+            acceptSignalsFromGame = false;
+            frameIsAlive = false;
+            layoutIsAlive = false;
+            sweeperGameIsAlive = false;
+            sweeperWidgetIsAlive = false;
+            threadIsAlive = false;
+        }
     };
     explicit SweeperBatchManager(QObject* parent = 0);
     ~SweeperBatchManager();
@@ -28,6 +43,8 @@ public:
     void terminateBatch();
 
 signals:
+    void triggerBatchDone();
+    void triggerBatchLaunched();
     void triggerBeginGame();
     void triggerUpdateOverview(SweeperBatchStatus* batchStatus);
 
@@ -41,6 +58,8 @@ private:
     SweeperBatchSettings* batchSettings;
     SweeperBatchStatus* batchStatus;
     int threadsInBatch;
+    void emitIfBatchLaunched();
+    void emitIfBatchDone();
     void killAllThreadsAndGames();
 };
 

@@ -12,6 +12,8 @@ SweeperControlWindow::SweeperControlWindow(QWidget* parent) : QMainWindow(parent
     batchStatus = new SweeperBatchStatus(this);
     lastUsedBatchSettings = new SweeperBatchSettings(this);
     defaultBatchSettings = new SweeperBatchSettings(this);
+    connect(batchManager, SIGNAL(triggerBatchDone()), this, SLOT(doBatchDone()));
+    connect(batchManager, SIGNAL(triggerBatchLaunched()), this, SLOT(doBatchLaunched()));
     connect(batchManager, SIGNAL(triggerUpdateOverview(SweeperBatchStatus*)),
             this, SLOT(doUpdateOverview(SweeperBatchStatus*)));
 }
@@ -22,99 +24,16 @@ SweeperControlWindow::~SweeperControlWindow()
     SweeperWidget::unhookResources();
 }
 
-void SweeperControlWindow::disableSettings()
+void SweeperControlWindow::doBatchDone()
 {
-    ui->advancedRadioButton->setEnabled(false);
-    ui->beginnerRadioButton->setEnabled(false);
-    ui->customRadioButton->setEnabled(false);
-    ui->gameCountLabel->setEnabled(false);
-    ui->gameCountSpinBox->setEnabled(false);
-    ui->heightLabel->setEnabled(false);
-    ui->heightSpinBox->setEnabled(false);
-    ui->intermediateRadioButton->setEnabled(false);
-    ui->maxThreadCountLabel->setEnabled(false);
-    ui->maxThreadCountSpinBox->setEnabled(false);
-    ui->minesLabel->setEnabled(false);
-    ui->minesSpinBox->setEnabled(false);
-    ui->pausePerActionLabel->setEnabled(false);
-    ui->pausePerActionSpinBox->setEnabled(false);
-    ui->playerTypeComboBox->setEnabled(false);
-    ui->playerTypeLabel->setEnabled(false);
-    ui->restoreDefaultSettingsButton->setEnabled(false);
-    ui->restoreLastUsedSettingsButton->setEnabled(false);
-    ui->showGuiCheckBox->setEnabled(false);
-    ui->unlockGuiCheckBox->setEnabled(false);
-    ui->widthLabel->setEnabled(false);
-    ui->widthSpinBox->setEnabled(false);
-    ui->batchButton->setStyleSheet("background-color: red");
+    enableSettings();
+}
+
+void SweeperControlWindow::doBatchLaunched()
+{
+    ui->batchButton->setEnabled(true);
+    ui->batchButton->setStyleSheet("background-color: red; color: black");
     ui->batchButton->setText("Terminate");
-    update();
-}
-
-void SweeperControlWindow::enableSettings()
-{
-    ui->advancedRadioButton->setEnabled(true);
-    ui->beginnerRadioButton->setEnabled(true);
-    ui->customRadioButton->setEnabled(true);
-    if(ui->customRadioButton->isChecked())
-    {
-        ui->widthSpinBox->setEnabled(true);
-        ui->heightSpinBox->setEnabled(true);
-        ui->minesSpinBox->setEnabled(true);
-    }
-    ui->gameCountLabel->setEnabled(true);
-    ui->gameCountSpinBox->setEnabled(true);
-    ui->heightLabel->setEnabled(true);
-    ui->intermediateRadioButton->setEnabled(true);
-    ui->maxThreadCountLabel->setEnabled(true);
-    ui->maxThreadCountSpinBox->setEnabled(true);
-    ui->minesLabel->setEnabled(true);
-    ui->pausePerActionLabel->setEnabled(true);
-    ui->pausePerActionSpinBox->setEnabled(true);
-    ui->playerTypeComboBox->setEnabled(true);
-    ui->playerTypeLabel->setEnabled(true);
-    ui->restoreDefaultSettingsButton->setEnabled(true);
-    ui->restoreLastUsedSettingsButton->setEnabled(true);
-    ui->showGuiCheckBox->setEnabled(true);
-    ui->widthLabel->setEnabled(true);
-    ui->batchButton->setStyleSheet("background-color: green");
-    ui->batchButton->setText("Launch");
-    update();
-}
-
-void SweeperControlWindow::restoreSettingsHelper()
-{
-    if(batchSettings->width == SweeperBatchSettings::BEGINNER_WIDTH &&
-       batchSettings->height == SweeperBatchSettings::BEGINNER_HEIGHT &&
-       batchSettings->mines == SweeperBatchSettings::BEGINNER_MINES)
-    {
-        on_beginnerRadioButton_clicked();
-    }
-    else if(batchSettings->width == SweeperBatchSettings::INTERMEDIATE_WIDTH &&
-            batchSettings->height == SweeperBatchSettings::INTERMEDIATE_HEIGHT &&
-            batchSettings->mines == SweeperBatchSettings::INTERMEDIATE_MINES)
-    {
-        on_intermediateRadioButton_clicked();
-    }
-    else if(batchSettings->width == SweeperBatchSettings::ADVANCED_WIDTH &&
-            batchSettings->height == SweeperBatchSettings::ADVANCED_HEIGHT &&
-            batchSettings->mines == SweeperBatchSettings::ADVANCED_MINES)
-    {
-        on_advancedRadioButton_clicked();
-    }
-    else
-    {
-        on_customRadioButton_clicked();
-        ui->widthSpinBox->setValue(batchSettings->width);
-        ui->heightSpinBox->setValue(batchSettings->height);
-        ui->minesSpinBox->setValue(batchSettings->mines);
-    }
-    ui->gameCountSpinBox->setValue(batchSettings->gameCount);
-    ui->maxThreadCountSpinBox->setValue(batchSettings->maxThreadCount);
-    ui->pausePerActionSpinBox->setValue((double)batchSettings->msPausePerAction / 1000);
-    ui->playerTypeComboBox->setCurrentIndex(batchSettings->playerType);
-    ui->showGuiCheckBox->setChecked(batchSettings->showGui);
-    ui->unlockGuiCheckBox->setChecked(batchSettings->unlockGui);
     update();
 }
 
@@ -174,6 +93,104 @@ void SweeperControlWindow::doUpdateOverview(SweeperBatchStatus* latestBatchStatu
     update();
 }
 
+void SweeperControlWindow::disableSettings()
+{
+    ui->advancedRadioButton->setEnabled(false);
+    ui->beginnerRadioButton->setEnabled(false);
+    ui->customRadioButton->setEnabled(false);
+    ui->gameCountLabel->setEnabled(false);
+    ui->gameCountSpinBox->setEnabled(false);
+    ui->heightLabel->setEnabled(false);
+    ui->heightSpinBox->setEnabled(false);
+    ui->intermediateRadioButton->setEnabled(false);
+    ui->maxThreadCountLabel->setEnabled(false);
+    ui->maxThreadCountSpinBox->setEnabled(false);
+    ui->minesLabel->setEnabled(false);
+    ui->minesSpinBox->setEnabled(false);
+    ui->pausePerActionLabel->setEnabled(false);
+    ui->pausePerActionSpinBox->setEnabled(false);
+    ui->playerTypeComboBox->setEnabled(false);
+    ui->playerTypeLabel->setEnabled(false);
+    ui->restoreDefaultSettingsButton->setEnabled(false);
+    ui->restoreLastUsedSettingsButton->setEnabled(false);
+    ui->showGuiCheckBox->setEnabled(false);
+    ui->unlockGuiCheckBox->setEnabled(false);
+    ui->widthLabel->setEnabled(false);
+    ui->widthSpinBox->setEnabled(false);
+    ui->batchButton->setEnabled(false);
+    ui->batchButton->setStyleSheet("background-color: blue; color: white");
+    ui->batchButton->setText("Loading...");
+    update();
+}
+
+void SweeperControlWindow::enableSettings()
+{
+    ui->advancedRadioButton->setEnabled(true);
+    ui->beginnerRadioButton->setEnabled(true);
+    ui->customRadioButton->setEnabled(true);
+    if(ui->customRadioButton->isChecked())
+    {
+        ui->widthSpinBox->setEnabled(true);
+        ui->heightSpinBox->setEnabled(true);
+        ui->minesSpinBox->setEnabled(true);
+    }
+    ui->gameCountLabel->setEnabled(true);
+    ui->gameCountSpinBox->setEnabled(true);
+    ui->heightLabel->setEnabled(true);
+    ui->intermediateRadioButton->setEnabled(true);
+    ui->maxThreadCountLabel->setEnabled(true);
+    ui->maxThreadCountSpinBox->setEnabled(true);
+    ui->minesLabel->setEnabled(true);
+    ui->pausePerActionLabel->setEnabled(true);
+    ui->pausePerActionSpinBox->setEnabled(true);
+    ui->playerTypeComboBox->setEnabled(true);
+    ui->playerTypeLabel->setEnabled(true);
+    ui->restoreDefaultSettingsButton->setEnabled(true);
+    ui->restoreLastUsedSettingsButton->setEnabled(true);
+    ui->showGuiCheckBox->setEnabled(true);
+    ui->widthLabel->setEnabled(true);
+    ui->batchButton->setEnabled(true);
+    ui->batchButton->setStyleSheet("background-color: green; color: black");
+    ui->batchButton->setText("Launch");
+    update();
+}
+
+void SweeperControlWindow::restoreSettingsHelper()
+{
+    if(batchSettings->width == SweeperBatchSettings::BEGINNER_WIDTH &&
+       batchSettings->height == SweeperBatchSettings::BEGINNER_HEIGHT &&
+       batchSettings->mines == SweeperBatchSettings::BEGINNER_MINES)
+    {
+        on_beginnerRadioButton_clicked();
+    }
+    else if(batchSettings->width == SweeperBatchSettings::INTERMEDIATE_WIDTH &&
+            batchSettings->height == SweeperBatchSettings::INTERMEDIATE_HEIGHT &&
+            batchSettings->mines == SweeperBatchSettings::INTERMEDIATE_MINES)
+    {
+        on_intermediateRadioButton_clicked();
+    }
+    else if(batchSettings->width == SweeperBatchSettings::ADVANCED_WIDTH &&
+            batchSettings->height == SweeperBatchSettings::ADVANCED_HEIGHT &&
+            batchSettings->mines == SweeperBatchSettings::ADVANCED_MINES)
+    {
+        on_advancedRadioButton_clicked();
+    }
+    else
+    {
+        on_customRadioButton_clicked();
+        ui->widthSpinBox->setValue(batchSettings->width);
+        ui->heightSpinBox->setValue(batchSettings->height);
+        ui->minesSpinBox->setValue(batchSettings->mines);
+    }
+    ui->gameCountSpinBox->setValue(batchSettings->gameCount);
+    ui->maxThreadCountSpinBox->setValue(batchSettings->maxThreadCount);
+    ui->pausePerActionSpinBox->setValue((double)batchSettings->msPausePerAction / 1000);
+    ui->playerTypeComboBox->setCurrentIndex(batchSettings->playerType);
+    ui->showGuiCheckBox->setChecked(batchSettings->showGui);
+    ui->unlockGuiCheckBox->setChecked(batchSettings->unlockGui);
+    update();
+}
+
 void SweeperControlWindow::on_advancedRadioButton_clicked()
 {
     ui->beginnerRadioButton->setChecked(false);
@@ -194,8 +211,12 @@ void SweeperControlWindow::on_batchButton_clicked()
     switch(batchStatus->batchState)
     {
         case SweeperBatchStatus::IN_PROGRESS:
+            ui->batchButton->setEnabled(false);
+            ui->batchButton->setStyleSheet("background-color: blue; color: white");
+            ui->batchButton->setText("Stopping...");
+            repaint();
+            update();
             batchManager->terminateBatch();
-            enableSettings();
             break;
         default:
             disableSettings();

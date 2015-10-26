@@ -13,7 +13,7 @@ class SweeperGame : public QObject
 {
     Q_OBJECT
 public:
-    int index;
+    bool safeToDeleteModel;
     SweeperModel* sweeperModel;
     SweeperGame(int index, SweeperBatchSettings* batchSettings, QObject* parent = 0);
     ~SweeperGame();
@@ -22,6 +22,7 @@ signals:
     void triggerEndOfGame(int index, SweeperModel::GAME_STATE gameState);
     void triggerKillGui(int index);
     void triggerSpawnGui(int index, SweeperModel* sweeperModel);
+    void triggerSweeperGameIsAlive();
     void triggerTakeNextAction();
 
 public slots:
@@ -34,6 +35,7 @@ public slots:
 private:
     SweeperBatchSettings* batchSettings;
     bool firstReveal;
+    int index;
     PlayerAbstract* player;
     int countAdjacentFlagsHelper(SweeperNode* node);
     SweeperNode::NODE_STATE countAdjacentMines(SweeperNode* node);

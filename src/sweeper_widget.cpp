@@ -1,3 +1,4 @@
+#include <QDebug>
 #include "../inc/sweeper_widget.h"
 
 bool SweeperWidget::mouseOnePressed = false;

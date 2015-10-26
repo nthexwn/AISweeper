@@ -1,3 +1,4 @@
+#include <QDebug>
 #include <QThread>
 #include "../inc/sweeper_common_functions.h"
 #include "../inc/sweeper_game.h"
@@ -6,10 +7,12 @@ SweeperGame::SweeperGame(int index, SweeperBatchSettings* batchSettings, QObject
 {
     this->index = index;
     this->batchSettings = batchSettings;
+    safeToDeleteModel = true;
 }
 
 SweeperGame::~SweeperGame()
 {
+    while(!safeToDeleteModel) { QThread::sleep(1); }
     delete sweeperModel;
 }
 
@@ -17,7 +20,11 @@ void SweeperGame::doBeginGame()
 {
     firstReveal = true;
     sweeperModel = new SweeperModel(batchSettings->width, batchSettings->height, batchSettings->mines);
-    if(batchSettings->showGui) emit triggerSpawnGui(index, sweeperModel);
+    if(batchSettings->showGui)
+    {
+        safeToDeleteModel = false;
+        emit triggerSpawnGui(index, sweeperModel);
+    }
     switch(batchSettings->playerType)
     {
     case SweeperBatchSettings::HUMAN:
@@ -38,6 +45,7 @@ void SweeperGame::doBeginGame()
     connect(player, SIGNAL(triggerRevealAction(QPoint)), this, SLOT(doRevealAction(QPoint)));
     connect(player, SIGNAL(triggerRevealAdjacentAction(QPoint)), this, SLOT(doRevealAdjacentAction(QPoint)));
     connect(this, SIGNAL(triggerTakeNextAction()), player, SLOT(doTakeNextAction()));
+    emit triggerSweeperGameIsAlive();
     handlePauseAndTakeNextAction();
 }
 
