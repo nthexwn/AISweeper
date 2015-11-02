@@ -27,6 +27,10 @@ SweeperControlWindow::~SweeperControlWindow()
 void SweeperControlWindow::doBatchDone()
 {
     enableSettings();
+    ui->batchButton->setEnabled(true);
+    ui->batchButton->setStyleSheet("background-color: green; color: black");
+    ui->batchButton->setText("Launch");
+    update();
 }
 
 void SweeperControlWindow::doBatchLaunched()
@@ -117,9 +121,6 @@ void SweeperControlWindow::disableSettings()
     ui->unlockGuiCheckBox->setEnabled(false);
     ui->widthLabel->setEnabled(false);
     ui->widthSpinBox->setEnabled(false);
-    ui->batchButton->setEnabled(false);
-    ui->batchButton->setStyleSheet("background-color: blue; color: white");
-    ui->batchButton->setText("Loading...");
     update();
 }
 
@@ -149,9 +150,6 @@ void SweeperControlWindow::enableSettings()
     ui->restoreLastUsedSettingsButton->setEnabled(true);
     ui->showGuiCheckBox->setEnabled(true);
     ui->widthLabel->setEnabled(true);
-    ui->batchButton->setEnabled(true);
-    ui->batchButton->setStyleSheet("background-color: green; color: black");
-    ui->batchButton->setText("Launch");
     update();
 }
 
@@ -219,7 +217,12 @@ void SweeperControlWindow::on_batchButton_clicked()
             batchManager->terminateBatch();
             break;
         default:
+            ui->batchButton->setEnabled(false);
+            ui->batchButton->setStyleSheet("background-color: blue; color: white");
+            ui->batchButton->setText("Loading...");
             disableSettings();
+            repaint();
+            update();
             batchSettings->copyTo(lastUsedBatchSettings);
             batchManager->launchBatch(batchSettings);
             break;

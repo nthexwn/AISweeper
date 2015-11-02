@@ -13,10 +13,10 @@ public:
     virtual void takeNextAction() = 0;
 
 signals:
-    triggerFlagAction(QPoint);
-    triggerQuitAction();
-    triggerRevealAction(QPoint);
-    triggerRevealAdjacentAction(QPoint);
+    void triggerFlagAction(QPoint);
+    void triggerQuitAction();
+    void triggerRevealAction(QPoint);
+    void triggerRevealAdjacentAction(QPoint);
 
 public slots:
     void doTakeNextAction();
