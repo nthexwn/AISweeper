@@ -10,7 +10,8 @@ public:
     static void setWidgetPaletteColors(QWidget* widget, QColor baseColor, QColor textColor);
 
 private:
-    static bool qrandSeeded;
+    // __thread is a thread-local keyword that only works for POD types.
+    static __thread bool qrandSeeded;
 };
 
 #endif // SWEEPER_COMMON_FUNCTIONS_H
