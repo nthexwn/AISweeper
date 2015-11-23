@@ -1,4 +1,3 @@
-#include <QDebug>
 #include "../inc/sweeper_batch_manager.h"
 
 SweeperBatchManager::SweeperBatchManager(QObject* parent) : QObject(parent)
@@ -10,69 +9,8 @@ SweeperBatchManager::SweeperBatchManager(QObject* parent) : QObject(parent)
 SweeperBatchManager::~SweeperBatchManager()
 {
     killAllThreadsAndGames();
-}
-
-void SweeperBatchManager::launchBatch(SweeperBatchSettings* batchSettings)
-{
-    if(batchStatus->batchState == SweeperBatchStatus::IN_PROGRESS) return;
-    this->batchSettings = batchSettings;
-    threadsInBatch = batchSettings->gameCount > batchSettings->maxThreadCount ? batchSettings->maxThreadCount :
-                                                                                batchSettings->gameCount;
-    gameGroups = new GameGroup*[threadsInBatch];
-    for(int i = 0; i < threadsInBatch; i++)
-    {
-        QThread* thread = new QThread();
-        SweeperGame* sweeperGame  = new SweeperGame(i, batchSettings);
-        gameGroups[i] = new GameGroup();
-        gameGroups[i]->thread = thread;
-        connect(thread, &QThread::destroyed, [=]()
-        {
-            gameGroups[i]->threadIsAlive = false;
-            emitIfBatchDone();
-        });
-        connect(thread, &QThread::started, [=]()
-        {
-            gameGroups[i]->threadIsAlive = true;
-            emitIfBatchLaunched();
-        });
-        gameGroups[i]->sweeperGame = sweeperGame;
-        sweeperGame->moveToThread(thread);
-        if(batchSettings->showGui)
-        {
-            connect(sweeperGame, SIGNAL(triggerKillGui(int)), this, SLOT(doKillGui(int)));
-            connect(sweeperGame, SIGNAL(triggerSpawnGui(int, SweeperModel*)),
-                    this, SLOT(doSpawnGui(int, SweeperModel*)));
-        }
-        connect(sweeperGame, &SweeperGame::destroyed, [=]()
-        {
-            gameGroups[i]->sweeperGameIsAlive = false;
-            emitIfBatchDone();
-        });
-        connect(sweeperGame, &SweeperGame::triggerSweeperGameIsAlive, [=]()
-        {
-            gameGroups[i]->sweeperGameIsAlive = true;
-            emitIfBatchLaunched();
-        });
-        connect(sweeperGame, SIGNAL(triggerEndOfGame(int, SweeperModel::GAME_STATE)),
-                this, SLOT(doEndOfGame(int, SweeperModel::GAME_STATE)));
-        connect(thread, SIGNAL(started()),sweeperGame, SLOT(doBeginGame()));
-        gameGroups[i]->acceptSignalsFromGame = true;
-    }
-    for(int i = 0; i < threadsInBatch; i++)
-    {
-        gameGroups[i]->thread->start();
-    }
-    batchStatus->gamesPlayed = 0;
-    batchStatus->gamesWon = 0;
-    batchStatus->totalGames = batchSettings->gameCount;
-    emit triggerUpdateOverview(batchStatus);
-}
-
-void SweeperBatchManager::terminateBatch()
-{
-    if(batchStatus->batchState != SweeperBatchStatus::IN_PROGRESS) return;
-    killAllThreadsAndGames();
-    emit triggerUpdateOverview(batchStatus);
+    delete batchSettings;
+    delete batchStatus;
 }
 
 void SweeperBatchManager::doEndOfGame(int index, SweeperModel::GAME_STATE gameState)
@@ -90,7 +28,6 @@ void SweeperBatchManager::doEndOfGame(int index, SweeperModel::GAME_STATE gameSt
         sweeperGame->moveToThread(gameGroups[index]->thread);
         if(batchSettings->showGui)
         {
-            connect(sweeperGame, SIGNAL(triggerKillGui(int)), this, SLOT(doKillGui(int, SweeperModel*)));
             connect(sweeperGame, SIGNAL(triggerSpawnGui(int, SweeperModel*)),
                     this, SLOT(doSpawnGui(int, SweeperModel*)));
         }
@@ -121,71 +58,93 @@ void SweeperBatchManager::doEndOfGame(int index, SweeperModel::GAME_STATE gameSt
     emit triggerUpdateOverview(batchStatus);
 }
 
-void SweeperBatchManager::doKillGui(int index)
+void SweeperBatchManager::launchBatch(SweeperBatchSettings* newBatchSettings)
 {
-    if(!gameGroups || !gameGroups[index] || !gameGroups[index]->acceptSignalsFromGame) return;
-    if(batchSettings->showGui)
+    // Prevent attempting to launch multiple times
+    if(batchStatus->batchState == SweeperBatchStatus::LOADING ||
+       batchStatus->batchState == SweeperBatchStatus::IN_PROGRESS) return;
+    batchStatus->batchState = SweeperBatchStatus::LOADING;
+
+    // Save the batch settings that got passed in
+    newBatchSettings->copyTo(batchSettings);
+
+    // Reset the batch status
+    batchStatus->gamesPlayed = 0;
+    batchStatus->gamesWon = 0;
+    batchStatus->totalGames = batchSettings->gameCount;
+    emit triggerUpdateOverview(batchStatus);
+
+    // Determine how many threads to use for the batch
+    threadsInBatch = batchSettings->gameCount > batchSettings->maxThreadCount ? batchSettings->maxThreadCount :
+                                                                                batchSettings->gameCount;
+
+    // Start a new game group (collection of objects which correspond to a single game instance) for every thread.
+    gameGroups = new GameGroup*[threadsInBatch];
+    for(int i = 0; i < threadsInBatch; i++)
     {
-        if(gameGroups[index]->frame)
+        gameGroups[i] = new GameGroup();
+
+        // Create game
+        SweeperGame* sweeperGame  = new SweeperGame(i, batchSettings);
+        gameGroups[i]->sweeperGame = sweeperGame;
+        connect(sweeperGame, &SweeperGame::triggerSweeperGameIsAlive, [=]()
         {
-            SweeperGame* sweeperGame = gameGroups[index]->sweeperGame;
-            connect(gameGroups[index]->sweeperWidget, &QObject::destroyed, [=]()
-            {
-                sweeperGame->safeToDeleteModel = true;
-            });
-            delete gameGroups[index]->frame;
-        }
-        else
+            // Mark the game as fully started up
+            gameGroups[i]->sweeperGameIsAlive = true;
+
+            // Check if this was the last game we were waiting on before signaling batch launched to the control window
+            emitIfBatchLaunched();
+        });
+        connect(sweeperGame, &SweeperGame::destroyed, [=]()
         {
-            gameGroups[index]->sweeperGame->safeToDeleteModel = true;
+            // Mark the game as fully shut down
+            gameGroups[i]->sweeperGameIsAlive = false;
+
+            // Check if this was the last game we were waiting on before signaling batch done to the control window
+            emitIfBatchDone();
+        });
+
+        // Create thread
+        QThread* thread = new QThread();
+        gameGroups[i]->thread = thread;
+
+        // All calls to the game object will be processed by the new thread
+        sweeperGame->moveToThread(thread);
+        connect(thread, SIGNAL(started()), sweeperGame, SLOT(doBeginGame()));
+
+        // Create GUI (if selected by user)
+        if(batchSettings->showGui)
+        {
+            // Unfortunately Qt only allows the main thread to control GUI objects, so the game object will have to
+            // call us back when it's ready for the GUI to be shown or deleted.
+            connect(sweeperGame, SIGNAL(triggerSpawnGui(int, SweeperModel*)),
+                    this, SLOT(doSpawnGui(int, SweeperModel*)));
         }
+
+        // Enable the game to let us know once it's over
+        connect(sweeperGame, SIGNAL(triggerEndOfGame(int, SweeperModel::GAME_STATE)),
+                this, SLOT(doEndOfGame(int, SweeperModel::GAME_STATE)));
+        gameGroups[i]->acceptSignalsFromGame = true;
+
+        // Start the game's thread
+        gameGroups[i]->thread->start();
     }
 }
 
 void SweeperBatchManager::doSpawnGui(int index, SweeperModel* sweeperModel)
 {
-    if(!gameGroups || !gameGroups[index] || !gameGroups[index]->acceptSignalsFromGame) return;
-
-    // Game already exists
-    SweeperGame* sweeperGame = gameGroups[index]->sweeperGame;
-
     // Generate widget
     SweeperWidget* sweeperWidget = new SweeperWidget(sweeperModel);
     gameGroups[index]->sweeperWidget = sweeperWidget;
+    gameGroups[index]->sweeperWidgetIsAlive = true;
     connect(sweeperWidget, &SweeperWidget::destroyed, [=]()
     {
         gameGroups[index]->sweeperWidgetIsAlive = false;
         emitIfBatchDone();
     });
-    gameGroups[index]->sweeperWidgetIsAlive = true;
-
-    // Generate frame
-    QFrame* frame = new QFrame();
-    gameGroups[index]->frame = frame;
-    connect(frame, &QFrame::destroyed, [=]()
-    {
-        gameGroups[index]->frameIsAlive = false;
-        emitIfBatchDone();
-    });
-    frame->setFrameShape(QFrame::Panel);
-    gameGroups[index]->frameIsAlive = true;
-
-    // Generate layout
-    QVBoxLayout* layout = new QVBoxLayout();
-    gameGroups[index]->layout = layout;
-    connect(layout, &QVBoxLayout::destroyed, [=]()
-    {
-        gameGroups[index]->layoutIsAlive = false;
-        emitIfBatchDone();
-    });
-    layout->setMargin(0);
-    gameGroups[index]->layoutIsAlive = true;
-
-    // Attach the GUI objects that we just generated
-    layout->addWidget(sweeperWidget);
-    frame->setLayout(layout);
 
     // Connect GUI actions to their corresponding handlers in the game object
+    SweeperGame* sweeperGame = gameGroups[index]->sweeperGame;
     connect(sweeperWidget, SIGNAL(triggerFlagAction(QPoint)), sweeperGame, SLOT(doFlagAction(QPoint)));
     connect(sweeperWidget, SIGNAL(triggerQuitAction()), sweeperGame, SLOT(doQuitAction()));
     connect(sweeperWidget, SIGNAL(triggerRevealAction(QPoint)), sweeperGame, SLOT(doRevealAction(QPoint)));
@@ -197,22 +156,23 @@ void SweeperBatchManager::doSpawnGui(int index, SweeperModel* sweeperModel)
     emitIfBatchLaunched();
 }
 
+void SweeperBatchManager::doTerminateBatch()
+{
+    // Make sure there's actually a running batch to terminate
+    if(batchStatus->batchState != SweeperBatchStatus::IN_PROGRESS) return;
+
+    killAllThreadsAndGames();
+    emit triggerUpdateOverview(batchStatus);
+}
+
 void SweeperBatchManager::emitIfBatchLaunched()
 {
-    if(!gameGroups[threadsInBatch - 1]) return;
-    if(batchStatus->batchState == SweeperBatchStatus::IN_PROGRESS) return;
     bool batchLaunched = true;
     for(int i = 0; i < threadsInBatch; i++)
     {
         if(!gameGroups[i]) batchLaunched = false;
         else if(!gameGroups[i]->sweeperGameIsAlive) batchLaunched = false;
-        else if(!gameGroups[i]->threadIsAlive) batchLaunched = false;
-        else if(batchSettings->showGui)
-        {
-            if(!gameGroups[i]->frameIsAlive) batchLaunched = false;
-            else if(!gameGroups[i]->layoutIsAlive) batchLaunched = false;
-            else if(!gameGroups[i]->sweeperWidgetIsAlive) batchLaunched = false;
-        }
+        else if(batchSettings->showGui && !gameGroups[i]->sweeperWidgetIsAlive) batchLaunched = false;
     }
     if(batchLaunched)
     {
@@ -221,7 +181,7 @@ void SweeperBatchManager::emitIfBatchLaunched()
         {
             for(int i = 0; i < threadsInBatch; i++)
             {
-                gameGroups[i]->frame->show();
+                gameGroups[i]->sweeperWidget->show();
             }
         }
         emit triggerUpdateOverview(batchStatus);
@@ -235,14 +195,9 @@ void SweeperBatchManager::emitIfBatchDone()
     bool batchDone = true;
     for(int i = 0; i < threadsInBatch; i++)
     {
-        if(gameGroups[i]->sweeperGameIsAlive) batchDone = false;
-        else if(gameGroups[i]->threadIsAlive) batchDone = false;
-        else if(batchSettings->showGui)
-        {
-            if(gameGroups[i]->frameIsAlive) batchDone = false;
-            else if(gameGroups[i]->layoutIsAlive) batchDone = false;
-            else if(gameGroups[i]->sweeperWidgetIsAlive) batchDone = false;
-        }
+        if(!gameGroups[i]) batchDone = false;
+        else if(gameGroups[i]->sweeperGameIsAlive) batchDone = false;
+        else if(batchSettings->showGui && gameGroups[i]->sweeperWidgetIsAlive) batchDone = false;
     }
     if(batchDone)
     {
@@ -264,7 +219,18 @@ void SweeperBatchManager::killAllThreadsAndGames()
     {
         if(batchSettings->showGui)
         {
-            doKillGui(i);
+            if(!gameGroups || !gameGroups[index] || !gameGroups[index]->acceptSignalsFromGame) return;
+            if(batchSettings->showGui)
+            {
+                if(gameGroups[index]->sweeperWidget)
+                {
+                    delete gameGroups[index]->sweeperWidget;
+                }
+                if(gameGroups[index]->sweeperGame)
+                {
+                    gameGroups[index]->sweeperGame->safeToDeleteModel = true;
+                }
+            }
         }
         gameGroups[i]->acceptSignalsFromGame = false;
         gameGroups[i]->sweeperGame->deleteLater();

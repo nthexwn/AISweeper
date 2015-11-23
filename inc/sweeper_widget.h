@@ -2,6 +2,7 @@
 #define SWEEPER_WIDGET_H
 
 #include <QtGui>
+#include <QMutex>
 #include <QWidget>
 #include "sweeper_model.h"
 
@@ -21,6 +22,7 @@ signals:
     void triggerRevealAdjacentAction(QPoint);
 
 protected:
+    void closeEvent(QCloseEvent* event);
     void mouseMoveEvent(QMouseEvent* event);
     void mousePressEvent(QMouseEvent* event);
     void mouseReleaseEvent(QMouseEvent* event);
@@ -29,8 +31,8 @@ protected:
 private:
     static bool mouseOnePressed;
     static bool mouseTwoPressed;
-    static bool resourceHookingStarted;
     static bool resourcesHooked;
+    static QMutex* resourceHookingMutex;
     SweeperModel* sweeperModel;
     static QPixmap* tileCorrect;
     static QPixmap* tileDetonated;

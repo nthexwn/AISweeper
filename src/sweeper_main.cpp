@@ -8,5 +8,7 @@ int main(int argc, char* argv[])
     SweeperControlWindow sweeperControlWindow;
     sweeperControlWindow.show();
 
+
+
     return app.exec();
 }

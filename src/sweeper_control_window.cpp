@@ -3,46 +3,75 @@
 #include "../inc/sweeper_widget.h"
 #include "ui_sweeper_control_window.h"
 
+// Called from main function
 SweeperControlWindow::SweeperControlWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::SweeperControlWindow)
 {
+    // Setup all of the GUI elements that were declared in the control window's form file (not in code)
     ui->setupUi(this);
     ui->batchButton->setStyleSheet("background-color: green");
+
+    // These objects are all children of the control window ('this'), so they will be automatically deleted by Qt at
+    // application exit (no need to include them in the destructor).
     batchManager = new SweeperBatchManager(this);
     batchSettings = new SweeperBatchSettings(this);
     batchStatus = new SweeperBatchStatus(this);
     lastUsedBatchSettings = new SweeperBatchSettings(this);
     defaultBatchSettings = new SweeperBatchSettings(this);
+
+    // Connect the control window to the batch manager
     connect(batchManager, SIGNAL(triggerBatchDone()), this, SLOT(doBatchDone()));
     connect(batchManager, SIGNAL(triggerBatchLaunched()), this, SLOT(doBatchLaunched()));
     connect(batchManager, SIGNAL(triggerUpdateOverview(SweeperBatchStatus*)),
             this, SLOT(doUpdateOverview(SweeperBatchStatus*)));
+    connect(this, SIGNAL(triggerLaunchBatch(SweeperBatchSettings*)),
+            batchManager, SLOT(doLaunchBatch(SweeperBatchSettings*)));
+    connect(this, SIGNAL(triggerTerminateBatch()), batchManager, SLOT(doTerminateBatch());
 }
 
+// Triggers application close
 SweeperControlWindow::~SweeperControlWindow()
 {
+    // Let the batch manager know that it's time to shut everything down
+    emit triggerTerminateBatch();
+
+    // Delete all of the GUI elements that were declared in the control window's form file (not in code)
     delete ui;
+
+    // Unload all of the game tile images from memory
     SweeperWidget::unhookResources();
 }
 
+// Triggered by batch manager after all of the game objects for the batch have been stopped
 void SweeperControlWindow::doBatchDone()
 {
+    // Allow settings for the next batch to be modified
     enableSettings();
+
+    // Allow the next batch to be started
     ui->batchButton->setEnabled(true);
     ui->batchButton->setStyleSheet("background-color: green; color: black");
     ui->batchButton->setText("Launch");
+
+    // Render the changes in the control window GUI immediately
     update();
 }
 
+// Triggered by batch manager after all of the game objects for the batch have been started
 void SweeperControlWindow::doBatchLaunched()
 {
+    // Allow the batch to be stopped
     ui->batchButton->setEnabled(true);
     ui->batchButton->setStyleSheet("background-color: red; color: black");
     ui->batchButton->setText("Terminate");
+
+    // Render the changes in the control window GUI immediately
     update();
 }
 
+// Triggered by batch manager whenever batch status information has been modified (IE: games completed count changes)
 void SweeperControlWindow::doUpdateOverview(SweeperBatchStatus* latestBatchStatus)
 {
+    // Copy the latest batch status in order to prevent it from changing again in the middle of the update
     latestBatchStatus->copyTo(batchStatus);
 
     // Update state
@@ -66,7 +95,8 @@ void SweeperControlWindow::doUpdateOverview(SweeperBatchStatus* latestBatchStatu
             break;
     }
 
-    // Update games played
+    // Update games played (% is a Qt macro that replicates StringBuilder functionality for linked concatenation.
+    // It's essentially the same as the + operator, but with better performance in many cases.)
     QString gamesPlayedString = QString::number(batchStatus->gamesPlayed) %
                                 "/" %
                                 QString::number(batchStatus->totalGames);
@@ -86,6 +116,7 @@ void SweeperControlWindow::doUpdateOverview(SweeperBatchStatus* latestBatchStatu
     }
     else
     {
+        // We don't want to divide by zero, so we just display this instead.
         gamesWonString = "0/0";
     }
     ui->batchGamesWonLineEdit->setText(gamesWonString);
@@ -97,6 +128,8 @@ void SweeperControlWindow::doUpdateOverview(SweeperBatchStatus* latestBatchStatu
     update();
 }
 
+// This gets called immediately after the launch batch button is pushed by the user.  We don't want the batch settings
+// to be modified while a batch is running.
 void SweeperControlWindow::disableSettings()
 {
     ui->advancedRadioButton->setEnabled(false);
@@ -124,6 +157,8 @@ void SweeperControlWindow::disableSettings()
     update();
 }
 
+// This gets called after the batch manager signals the end of the previous batch.  This means that it's safe to update
+// the settings for the next batch since no batch is currently running.
 void SweeperControlWindow::enableSettings()
 {
     ui->advancedRadioButton->setEnabled(true);
@@ -131,6 +166,7 @@ void SweeperControlWindow::enableSettings()
     ui->customRadioButton->setEnabled(true);
     if(ui->customRadioButton->isChecked())
     {
+        // Only re-enable the custom game settings if the difficulty was set to custom
         ui->widthSpinBox->setEnabled(true);
         ui->heightSpinBox->setEnabled(true);
         ui->minesSpinBox->setEnabled(true);
@@ -153,8 +189,12 @@ void SweeperControlWindow::enableSettings()
     update();
 }
 
+// This is shared code for restoring either default settings or the last used settings.
 void SweeperControlWindow::restoreSettingsHelper()
 {
+    // The game difficulties are only shown on the GUI.  If the actual numeric values (height, width, and mine count)
+    // happen to match up with one of the difficulties then we'll pretend that the user just selected that difficulty.
+    // This will cause all of the related GUI updates to be handled for us (IE: deselecting the other difficulties).
     if(batchSettings->width == SweeperBatchSettings::BEGINNER_WIDTH &&
        batchSettings->height == SweeperBatchSettings::BEGINNER_HEIGHT &&
        batchSettings->mines == SweeperBatchSettings::BEGINNER_MINES)
@@ -180,6 +220,8 @@ void SweeperControlWindow::restoreSettingsHelper()
         ui->heightSpinBox->setValue(batchSettings->height);
         ui->minesSpinBox->setValue(batchSettings->mines);
     }
+
+    // Restoring the other settings is much more straight-forward.
     ui->gameCountSpinBox->setValue(batchSettings->gameCount);
     ui->maxThreadCountSpinBox->setValue(batchSettings->maxThreadCount);
     ui->pausePerActionSpinBox->setValue((double)batchSettings->msPausePerAction / 1000);
@@ -189,6 +231,7 @@ void SweeperControlWindow::restoreSettingsHelper()
     update();
 }
 
+// Deselect the other difficulties and set the appropriate height/width/mines values
 void SweeperControlWindow::on_advancedRadioButton_clicked()
 {
     ui->beginnerRadioButton->setChecked(false);
@@ -204,31 +247,50 @@ void SweeperControlWindow::on_advancedRadioButton_clicked()
     update();
 }
 
+// Starts the next batch or stops the current one as appropriate
 void SweeperControlWindow::on_batchButton_clicked()
 {
     switch(batchStatus->batchState)
     {
+        // If a batch is currently in progress then we'll terminate it.
         case SweeperBatchStatus::IN_PROGRESS:
+            // Immediately disable the button so that we don't send multiple terminate signals
             ui->batchButton->setEnabled(false);
             ui->batchButton->setStyleSheet("background-color: blue; color: white");
             ui->batchButton->setText("Stopping...");
+
+            // In addition to the regular GUI updates it appears that we need to trigger a repaint on OSX in order to
+            // reflect the changes we've made to the batch button.
             repaint();
             update();
-            batchManager->terminateBatch();
+
+            // Send a signal to the batch manager to terminate the batch as soon as it can
+            emit triggerTerminateBatch();
             break;
+
+        // If no batch is currently in progress then we'll launch a new one.
         default:
+            // Immediately disable the button so that we don't send multiple launch signals
             ui->batchButton->setEnabled(false);
             ui->batchButton->setStyleSheet("background-color: blue; color: white");
             ui->batchButton->setText("Loading...");
             disableSettings();
+
+            // In addition to the regular GUI updates it appears that we need to trigger a repain on OSX in order to
+            // reflect the changes we've made to the batch button.
             repaint();
             update();
+
+            // Save the batch settings that we're using for this batch
             batchSettings->copyTo(lastUsedBatchSettings);
-            batchManager->launchBatch(batchSettings);
+
+            // Send a signal to the batch manager to launch the batch as soon as it can
+            emit triggerLaunchBatch(batchSettings);
             break;
     }
 }
 
+// Deselect the other difficulties and set the appropriate height/width/mines values
 void SweeperControlWindow::on_beginnerRadioButton_clicked()
 {
     ui->beginnerRadioButton->setChecked(true);
@@ -244,6 +306,7 @@ void SweeperControlWindow::on_beginnerRadioButton_clicked()
     update();
 }
 
+// Deselect the other difficulties and allow the height/width/mines values to be customized
 void SweeperControlWindow::on_customRadioButton_clicked()
 {
     ui->beginnerRadioButton->setChecked(false);
@@ -266,6 +329,7 @@ void SweeperControlWindow::on_heightSpinBox_valueChanged(int height)
     batchSettings->height = height;
 }
 
+// Deselect the other difficulties and set the appropriate height/width/mines values
 void SweeperControlWindow::on_intermediateRadioButton_clicked()
 {
     ui->beginnerRadioButton->setChecked(false);
@@ -298,6 +362,7 @@ void SweeperControlWindow::on_pausePerActionSpinBox_valueChanged(double secondsP
 
 void SweeperControlWindow::on_playerTypeComboBox_activated(int playerTypeIndex)
 {
+    // Disable the GUI for all of the AI players and leave it on for humans
     batchSettings->playerType = SweeperBatchSettings::PLAYER_TYPE(playerTypeIndex);
     if(batchSettings->playerType == SweeperBatchSettings::HUMAN)
     {
@@ -313,6 +378,7 @@ void SweeperControlWindow::on_playerTypeComboBox_activated(int playerTypeIndex)
 
 void SweeperControlWindow::on_playerTypeComboBox_currentIndexChanged(int playerTypeIndex)
 {
+    // Disable the GUI for all of the AI players and leave it on for humans
     batchSettings->playerType = SweeperBatchSettings::PLAYER_TYPE(playerTypeIndex);
     if(batchSettings->playerType == SweeperBatchSettings::HUMAN)
     {

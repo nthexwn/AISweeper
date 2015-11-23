@@ -17,30 +17,20 @@ public:
     struct GameGroup
     {
         bool acceptSignalsFromGame;
-        QPointer<QFrame> frame;
-        bool frameIsAlive;
-        QPointer<QVBoxLayout> layout;
-        bool layoutIsAlive;
         QPointer<SweeperGame> sweeperGame;
         bool sweeperGameIsAlive;
         QPointer<SweeperWidget> sweeperWidget;
         bool sweeperWidgetIsAlive;
         QPointer<QThread> thread;
-        bool threadIsAlive;
         GameGroup()
         {
             acceptSignalsFromGame = false;
-            frameIsAlive = false;
-            layoutIsAlive = false;
             sweeperGameIsAlive = false;
             sweeperWidgetIsAlive = false;
-            threadIsAlive = false;
         }
     };
     explicit SweeperBatchManager(QObject* parent = 0);
     ~SweeperBatchManager();
-    void launchBatch(SweeperBatchSettings* batchSettings);
-    void terminateBatch();
 
 signals:
     void triggerBatchDone();
@@ -50,8 +40,9 @@ signals:
 
 public slots:
     void doEndOfGame(int index, SweeperModel::GAME_STATE gameState);
-    void doKillGui(int index);
+    void doLaunchBatch(SweeperBatchSettings* batchSettings);
     void doSpawnGui(int index, SweeperModel* sweeperModel);
+    void doTerminateBatch();
 
 private:
     GameGroup** gameGroups;

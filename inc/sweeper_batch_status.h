@@ -10,7 +10,9 @@ public:
     enum BATCH_STATE
     {
         NOT_STARTED,
+        LOADING,
         IN_PROGRESS,
+        STOPPING,
         COMPLETED,
         TERMINATED
     };
@@ -21,7 +23,6 @@ public:
     explicit SweeperBatchStatus(QObject* parent = 0);
     SweeperBatchStatus(SweeperBatchStatus* batchStatus, QObject* parent = 0);
     void copyTo(SweeperBatchStatus* batchStatus);
-
 };
 
 #endif // SWEEPER_BATCH_STATUS_H

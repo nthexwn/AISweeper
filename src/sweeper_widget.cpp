@@ -25,10 +25,22 @@ QPixmap* SweeperWidget::tileRevealedEight;
 SweeperWidget::SweeperWidget(SweeperModel* sweeperModel, QWidget* parent) : QWidget(parent)
 {
     this->sweeperModel = sweeperModel;
-    if(!resourcesHooked && !resourceHookingStarted)
+
+    // Make sure all of the tile images have already been loaded
+    if(!resourcesHooked)
     {
-        resourceHookingStarted = true;
-        hookResources();
+        // Make sure the images only get loaded once (NOTE: we don't want to bother with the mutex if the images are
+        // alreay loaded.  This is why we check the resourcesHooked variable both inside and outside the mutex lock.)
+        resourceHookingMutex->lock();
+        {
+            // If another thread already loaded the images while this one was waiting then we don't need to.
+            if(!resourcesHooked)
+            {
+                // Only the first thread to enter the mutex lock will need to load the images.
+                hookResources();
+            }
+        }
+        resourceHookingMutex->unlock();
     }
     QSizePolicy sizePolicy = QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     setSizePolicy(sizePolicy);
@@ -99,6 +111,12 @@ void SweeperWidget::unhookResources()
     delete tileRevealedEight;
     tileRevealedEight = nullptr;
     resourcesHooked = false;
+}
+
+void SweeperWidget::closeEvent(QCloseEvent* event)
+{
+    event->accept();
+    qDebug() << "I got closed";
 }
 
 void SweeperWidget::mouseMoveEvent(QMouseEvent* event)

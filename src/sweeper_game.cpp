@@ -62,7 +62,6 @@ void SweeperGame::doFlagAction(QPoint nodeIndex)
 
 void SweeperGame::doQuitAction()
 {
-    if(batchSettings->showGui) emit triggerKillGui(index);
     emit triggerEndOfGame(index, sweeperModel->gameState);
 }
 

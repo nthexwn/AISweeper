@@ -14,7 +14,14 @@ public:
     explicit SweeperControlWindow(QWidget* parent = 0);
     ~SweeperControlWindow();
 
+signals:
+    // These will be used to control the batchManager.
+    void triggerLaunchBatch(SweeperBatchSettings* batchSettings);
+    void triggerTerminateBatch();
+
 public slots:
+    // These slots will be triggered by the batchManager before and after every batch execution.  They are used to
+    // update the GUI elements (IE: the launch button) and enable/disable the settings elements as appropriate.
     void doBatchDone();
     void doBatchLaunched();
 
