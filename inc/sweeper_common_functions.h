@@ -10,7 +10,8 @@ public:
     static void setWidgetPaletteColors(QWidget* widget, QColor baseColor, QColor textColor);
 
 private:
-    // __thread is a thread-local keyword that only works for POD types.
+    // __thread is a thread_local keyword that only works for POD types.  The official 'threadlocal' keyword cannot be
+    // used because it is not supported by Apple (Clang will throw a compile-time error).
     static __thread bool qrandSeeded;
 };
 

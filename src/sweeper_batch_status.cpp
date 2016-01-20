@@ -5,7 +5,8 @@ SweeperBatchStatus::SweeperBatchStatus(QObject* parent) : QObject(parent)
     batchState = SweeperBatchStatus::NOT_STARTED;
     gamesPlayed = 0;
     gamesWon = 0;
-    totalGames = 1;
+    gamesUnfinished = 0;
+    totalGames = 0;
 }
 
 void SweeperBatchStatus::copyTo(SweeperBatchStatus* batchStatus)

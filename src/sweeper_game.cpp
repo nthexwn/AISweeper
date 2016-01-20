@@ -7,24 +7,17 @@ SweeperGame::SweeperGame(int index, SweeperBatchSettings* batchSettings, QObject
 {
     this->index = index;
     this->batchSettings = batchSettings;
-    safeToDeleteModel = true;
-}
-
-SweeperGame::~SweeperGame()
-{
-    while(!safeToDeleteModel) { QThread::sleep(1); }
-    delete sweeperModel;
-}
-
-void SweeperGame::doBeginGame()
-{
     firstReveal = true;
-    sweeperModel = new SweeperModel(batchSettings->width, batchSettings->height, batchSettings->mines);
-    if(batchSettings->showGui)
+
+    // This enables the game to delete itself when requested to do so.  This is preferable to deleting the game from
+    // another thread since the game might be deleted while in the middle of processing a turn.  By doing it this way
+    // the game will only delete itself in-between actual game events when it picks up the signal which called this
+    // slot.
+    connect(this, SLOT(doDelete()), [=]()
     {
-        safeToDeleteModel = false;
-        emit triggerSpawnGui(index, sweeperModel);
-    }
+        delete this;
+    });
+    sweeperModel = new SweeperModel(batchSettings->width, batchSettings->height, batchSettings->mines);
     switch(batchSettings->playerType)
     {
     case SweeperBatchSettings::HUMAN:
@@ -45,7 +38,36 @@ void SweeperGame::doBeginGame()
     connect(player, SIGNAL(triggerRevealAction(QPoint)), this, SLOT(doRevealAction(QPoint)));
     connect(player, SIGNAL(triggerRevealAdjacentAction(QPoint)), this, SLOT(doRevealAdjacentAction(QPoint)));
     connect(this, SIGNAL(triggerTakeNextAction()), player, SLOT(doTakeNextAction()));
-    emit triggerSweeperGameIsAlive();
+    if(batchSettings->showGui)
+    {
+        sweeperWidget = new SweeperWidget(sweeperModel);
+        connect(sweeperWidget, SIGNAL(triggerFlagAction(QPoint)), sweeperGame, SLOT(doFlagAction(QPoint)));
+        connect(sweeperWidget, SIGNAL(triggerQuitAction()), sweeperGame, SLOT(doQuitAction()));
+        connect(sweeperWidget, SIGNAL(triggerRevealAction(QPoint)), sweeperGame, SLOT(doRevealAction(QPoint)));
+        connect(sweeperWidget, SIGNAL(triggerRevealAdjacentAction(QPoint), sweeperGame,
+                                      SLOT(doRevealAdjacentAction(QPoint));
+        connect(sweeperWidget, SIGNAL(triggerQuitAction()), )
+    }
+}
+
+SweeperGame::~SweeperGame()
+{
+    if(sweeperWidget != nullptr)
+    {
+        sweeperWidget->close();
+        delete sweeperWidget;
+    }
+    else
+    {
+        delete player;
+        delete sweeperModel;
+    }
+}
+
+void SweeperGame::doBeginGame()
+{
+    // The game, player, and GUI objects were already set up in the constructor.  All we have to do is tell the
+    // player object to start playing.
     handlePauseAndTakeNextAction();
 }
 
@@ -62,7 +84,7 @@ void SweeperGame::doFlagAction(QPoint nodeIndex)
 
 void SweeperGame::doQuitAction()
 {
-    emit triggerEndOfGame(index, sweeperModel->gameState);
+    emit triggerGameHasEnded(index, sweeperModel->gameState);
 }
 
 void SweeperGame::doRevealAction(QPoint nodeIndex)

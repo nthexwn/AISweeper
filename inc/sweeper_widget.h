@@ -2,7 +2,6 @@
 #define SWEEPER_WIDGET_H
 
 #include <QtGui>
-#include <QMutex>
 #include <QWidget>
 #include "sweeper_model.h"
 
@@ -10,6 +9,7 @@ class SweeperWidget : public QWidget
 {
     Q_OBJECT
 public:
+    SweeperModel* sweeperModel;
     SweeperWidget(SweeperModel* sweeperModel, QWidget* parent = 0);
     virtual QSize sizeHint() const;
     static void hookResources();
@@ -32,8 +32,6 @@ private:
     static bool mouseOnePressed;
     static bool mouseTwoPressed;
     static bool resourcesHooked;
-    static QMutex* resourceHookingMutex;
-    SweeperModel* sweeperModel;
     static QPixmap* tileCorrect;
     static QPixmap* tileDetonated;
     static QPixmap* tileFlagged;

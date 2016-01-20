@@ -1,9 +1,8 @@
-#include <QDebug>
+#include <QMutex>
 #include "../inc/sweeper_widget.h"
 
 bool SweeperWidget::mouseOnePressed = false;
 bool SweeperWidget::mouseTwoPressed = false;
-bool SweeperWidget::resourceHookingStarted = false;
 bool SweeperWidget::resourcesHooked = false;
 QPixmap* SweeperWidget::tileCorrect;
 QPixmap* SweeperWidget::tileDetonated;
@@ -31,7 +30,8 @@ SweeperWidget::SweeperWidget(SweeperModel* sweeperModel, QWidget* parent) : QWid
     {
         // Make sure the images only get loaded once (NOTE: we don't want to bother with the mutex if the images are
         // alreay loaded.  This is why we check the resourcesHooked variable both inside and outside the mutex lock.)
-        resourceHookingMutex->lock();
+        QMutex resourceHookingMutex;
+        resourceHookingMutex.lock();
         {
             // If another thread already loaded the images while this one was waiting then we don't need to.
             if(!resourcesHooked)
@@ -40,7 +40,7 @@ SweeperWidget::SweeperWidget(SweeperModel* sweeperModel, QWidget* parent) : QWid
                 hookResources();
             }
         }
-        resourceHookingMutex->unlock();
+        resourceHookingMutex.unlock();
     }
     QSizePolicy sizePolicy = QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     setSizePolicy(sizePolicy);
@@ -116,7 +116,7 @@ void SweeperWidget::unhookResources()
 void SweeperWidget::closeEvent(QCloseEvent* event)
 {
     event->accept();
-    qDebug() << "I got closed";
+    emit triggerQuitAction();
 }
 
 void SweeperWidget::mouseMoveEvent(QMouseEvent* event)

@@ -1,10 +1,7 @@
 #ifndef SWEEPER_BATCH_MANAGER_H
 #define SWEEPER_BATCH_MANAGER_H
 
-#include <QFrame>
-#include <QMutex>
 #include <QObject>
-#include <QVBoxLayout>
 #include "sweeper_batch_status.h"
 #include "sweeper_batch_settings.h"
 #include "sweeper_game.h"
@@ -14,44 +11,65 @@ class SweeperBatchManager : public QObject
 {
     Q_OBJECT
 public:
-    struct GameGroup
-    {
-        bool acceptSignalsFromGame;
-        QPointer<SweeperGame> sweeperGame;
-        bool sweeperGameIsAlive;
-        QPointer<SweeperWidget> sweeperWidget;
-        bool sweeperWidgetIsAlive;
-        QPointer<QThread> thread;
-        GameGroup()
-        {
-            acceptSignalsFromGame = false;
-            sweeperGameIsAlive = false;
-            sweeperWidgetIsAlive = false;
-        }
-    };
     explicit SweeperBatchManager(QObject* parent = 0);
     ~SweeperBatchManager();
 
 signals:
     void triggerBatchDone();
     void triggerBatchLaunched();
-    void triggerBeginGame();
+    void triggerSetupGame();
+    void triggerSetupPlayer();
+    void triggerStartGame();
+    void triggerTeardownGame();
+    void triggerTeardownPlayer();
+    void triggerDeleteSweeperWidget(SweeperWidget* sweeperWidget, int index);
+    void triggerGenerateSweeperWidget(SweeperModel* sweeperModel, int index);
+    void triggerShowSweeperWidget(SweeperWidget* sweeperWidget);
     void triggerUpdateOverview(SweeperBatchStatus* batchStatus);
 
 public slots:
-    void doEndOfGame(int index, SweeperModel::GAME_STATE gameState);
+    void doSweeperWidgetDeleted(int index);
+    void doSweeperWidgetGenerated(SweeperWidget* sweeperWidget, int index);
+    void doGameDone(int index, SweeperModel::GAME_STATE gameState);
+    void doGamePrepared(int index);
+    void doPlayerDone(int index);
+    void doPlayerPrepared(int index);
     void doLaunchBatch(SweeperBatchSettings* batchSettings);
-    void doSpawnGui(int index, SweeperModel* sweeperModel);
     void doTerminateBatch();
 
 private:
-    GameGroup** gameGroups;
+    enum ControlObjectState
+    {
+        INACTIVE,
+        ACTIVATING,
+        ACTIVE,
+        DEACTIVATING
+    };
+
+    // A collection of objects used to launch and terminate every game.
+    struct GameControlGroup
+    {
+        QPointer<SweeperGame> game;
+        ControlObjectState gameControlState;
+        SweeperWidget* widget;
+        ControlObjectState widgetControlState;
+        PlayerAbstract* player;
+        ControlObjectState playerControlState;
+        QPointer<QThread> thread;
+        GameControlGroup()
+        {
+            gameReady = INACTIVE;
+            widgetReady = INACTIVE;
+            playerReady = INACTIVE;
+        }
+    };
+    GameControlGroup** gameControlGroups;
     SweeperBatchSettings* batchSettings;
     SweeperBatchStatus* batchStatus;
+    bool terminationRequested;
     int threadsInBatch;
-    void emitIfBatchLaunched();
-    void emitIfBatchDone();
-    void killAllThreadsAndGames();
+    createObjectsForNewGame(int index);
+    startGameIfReady(int index);
 };
 
 #endif // SWEEPER_BATCH_MANAGER_H

@@ -1,59 +1,110 @@
 #include "../inc/sweeper_control_window.h"
 #include "../inc/sweeper_common_functions.h"
-#include "../inc/sweeper_widget.h"
 #include "ui_sweeper_control_window.h"
 
-// Called from main function
+// Constructor called from main function
 SweeperControlWindow::SweeperControlWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::SweeperControlWindow)
 {
+    // This will be set to true when the user closes the window
+    terminationRequested = false;
+
     // Setup all of the GUI elements that were declared in the control window's form file (not in code)
     ui->setupUi(this);
     ui->batchButton->setStyleSheet("background-color: green");
 
-    // These objects are all children of the control window ('this'), so they will be automatically deleted by Qt at
-    // application exit (no need to include them in the destructor).
-    batchManager = new SweeperBatchManager(this);
+    // Create the settings objects (we'll re-use these between batches).  Note that these are parented to the current
+    // window so that we don't need to delete them ourselves in the destructor (QT handles this for us).
     batchSettings = new SweeperBatchSettings(this);
     batchStatus = new SweeperBatchStatus(this);
     lastUsedBatchSettings = new SweeperBatchSettings(this);
     defaultBatchSettings = new SweeperBatchSettings(this);
 
-    // Connect the control window to the batch manager
-    connect(batchManager, SIGNAL(triggerBatchDone()), this, SLOT(doBatchDone()));
-    connect(batchManager, SIGNAL(triggerBatchLaunched()), this, SLOT(doBatchLaunched()));
+    // Create the batch manager and assign it to its own thread
+    batchManager = new SweeperBatchManager();
+    batchManagerThread = new QThread();
+    batchManager->moveToThread(batchManagerThread);
+
+    // Connect the batch manager to the control window
+    connect(batchManager, SIGNAL(triggerBatchDone()),
+            this, SLOT(doBatchDone()));
+    connect(batchManager, SIGNAL(triggerBatchLaunched()),
+            this, SLOT(doBatchLaunched()));
+    connect(batchManager, SIGNAL(triggerDeleteSweeperWidget(SweeperWidget*, int),
+            this, SLOT(doDeleteSweeperWidget(SweeperWidget*, int)));
+    connect(batchManager, SIGNAL(triggerGenerateSweeperWidget(SweeperModel*, int),
+            this, SLOT(doGenerateSweeperWidget(SweeperModel*, int));
+    connect(batchManager, SIGNAL(triggerShowSweeperWidget(SweeperWidget*),
+            this, SLOT(doShowSweeperWidget(SweeperWidget*)));
     connect(batchManager, SIGNAL(triggerUpdateOverview(SweeperBatchStatus*)),
             this, SLOT(doUpdateOverview(SweeperBatchStatus*)));
+
+    // Connect the control window to the batch manager
     connect(this, SIGNAL(triggerLaunchBatch(SweeperBatchSettings*)),
             batchManager, SLOT(doLaunchBatch(SweeperBatchSettings*)));
-    connect(this, SIGNAL(triggerTerminateBatch()), batchManager, SLOT(doTerminateBatch());
+    connect(this, SIGNAL(triggerSweeperWidgetDeleted(int)),
+            batchManager, SLOT(doSweeperWidgetDeleted(int)));
+    connect(this, SIGNAL(triggerSweeperWidgetGenerated(SweeperWidget*, int)),
+            batchManager, SLOT(doSweeperWidgetGenerated(SweeperWidget*, int)));
+    connect(this, SIGNAL(triggerTerminateBatch()),
+            batchManager, SLOT(doTerminateBatch()));
+
+    // Start the batch manager thread
+    batchManagerThread->start();
 }
 
-// Triggers application close
+// The batch manager should already be deleted when this destructor is called and its thread scheduled for deletion.
 SweeperControlWindow::~SweeperControlWindow()
 {
-    // Let the batch manager know that it's time to shut everything down
-    emit triggerTerminateBatch();
-
     // Delete all of the GUI elements that were declared in the control window's form file (not in code)
     delete ui;
 
     // Unload all of the game tile images from memory
     SweeperWidget::unhookResources();
+
+    // Shut down the program.
+    QCoreApplication::quit();
+}
+
+void SweeperControlWindow::closeEvent(QCloseEvent* event)
+{
+    // The control window has been closed, so we'll shut the application down as soon as we can.
+    event->accept();
+
+    // As soon as the current batch finishes we'll delete the batch manager as well as this control window.  This is
+    // the flag that tells us to do so.
+    terminationRequested = true;
+
+    // For now we'll tell the current batch to terminate itself and wait...  (until the doBatchDone slot is called).
+    emit triggerTerminateBatch();
 }
 
 // Triggered by batch manager after all of the game objects for the batch have been stopped
 void SweeperControlWindow::doBatchDone()
 {
-    // Allow settings for the next batch to be modified
-    enableSettings();
+    // If we were waiting on the batch to finish/terminate before shutting down the rest of the program...
+    if(terminationRequested)
+    {
+        // Since the last batch just finished we know it's safe to delete the batch manager and stop its thread.
+        batchManager->deleteLater();
+        batchManagerThread->quit;
+        batchManagerThread->deleteLater();
 
-    // Allow the next batch to be started
-    ui->batchButton->setEnabled(true);
-    ui->batchButton->setStyleSheet("background-color: green; color: black");
-    ui->batchButton->setText("Launch");
+        // We're now ready to delete the control window as well.
+        this->deleteLater();
+    }
+    else
+    {
+        // Allow settings for the next batch to be modified
+        enableSettings();
 
-    // Render the changes in the control window GUI immediately
-    update();
+        // Allow the next batch to be started
+        ui->batchButton->setEnabled(true);
+        ui->batchButton->setStyleSheet("background-color: green; color: black");
+        ui->batchButton->setText("Launch");
+
+        // Render the changes in the control window GUI immediately
+        update();
+    }
 }
 
 // Triggered by batch manager after all of the game objects for the batch have been started
@@ -66,6 +117,13 @@ void SweeperControlWindow::doBatchLaunched()
 
     // Render the changes in the control window GUI immediately
     update();
+}
+
+void SweeperControlWindow::doSweeperWidgetDeletion(int index)
+{
+    // Since Qt forces all GUI objects to be handled in the main thread we have to delete the widgets for each game
+    // here.
+    delete sweeperWidgets[index];
 }
 
 // Triggered by batch manager whenever batch status information has been modified (IE: games completed count changes)
@@ -81,6 +139,10 @@ void SweeperControlWindow::doUpdateOverview(SweeperBatchStatus* latestBatchStatu
             ui->batchStateLineEdit->setText("Not Started");
             SweeperCommonFunctions::setWidgetPaletteColors((QWidget*)ui->batchStateLineEdit, Qt::white, Qt::black);
             break;
+        case SweeperBatchStatus::LOADING:
+            ui->batchStateLineEdit->setText("Loading...");
+            SweeperCommonFunctions::setWidgetPaletteColors((QWidget*)ui->batchStateLineEdit, Qt::blue, Qt::black);
+            break;
         case SweeperBatchStatus::IN_PROGRESS:
             ui->batchStateLineEdit->setText("In Progress");
             SweeperCommonFunctions::setWidgetPaletteColors((QWidget*)ui->batchStateLineEdit, Qt::blue, Qt::white);
@@ -88,6 +150,10 @@ void SweeperControlWindow::doUpdateOverview(SweeperBatchStatus* latestBatchStatu
         case SweeperBatchStatus::COMPLETED:
             ui->batchStateLineEdit->setText("Completed");
             SweeperCommonFunctions::setWidgetPaletteColors((QWidget*)ui->batchStateLineEdit, Qt::green, Qt::black);
+            break;
+        case SweeperBatchStatus::TERMINATING:
+            ui->batchStateLineEdit->setText("Terminating...");
+            SweeperCommonFunctions::setWidgetPaletteColors((QWidget*)ui->batchStateLineEdit, Qt::red, Qt::black);
             break;
         case SweeperBatchStatus::TERMINATED:
             ui->batchStateLineEdit->setText("Terminated");
@@ -276,7 +342,7 @@ void SweeperControlWindow::on_batchButton_clicked()
             ui->batchButton->setText("Loading...");
             disableSettings();
 
-            // In addition to the regular GUI updates it appears that we need to trigger a repain on OSX in order to
+            // In addition to the regular GUI updates it appears that we need to trigger a repaint on OSX in order to
             // reflect the changes we've made to the batch button.
             repaint();
             update();
