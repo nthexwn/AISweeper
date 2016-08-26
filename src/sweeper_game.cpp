@@ -8,15 +8,6 @@ SweeperGame::SweeperGame(int index, SweeperBatchSettings* batchSettings, QObject
     this->index = index;
     this->batchSettings = batchSettings;
     firstReveal = true;
-
-    // This enables the game to delete itself when requested to do so.  This is preferable to deleting the game from
-    // another thread since the game might be deleted while in the middle of processing a turn.  By doing it this way
-    // the game will only delete itself in-between actual game events when it picks up the signal which called this
-    // slot.
-    connect(this, SLOT(doDelete()), [=]()
-    {
-        delete this;
-    });
     sweeperModel = new SweeperModel(batchSettings->width, batchSettings->height, batchSettings->mines);
     switch(batchSettings->playerType)
     {
@@ -41,12 +32,11 @@ SweeperGame::SweeperGame(int index, SweeperBatchSettings* batchSettings, QObject
     if(batchSettings->showGui)
     {
         sweeperWidget = new SweeperWidget(sweeperModel);
-        connect(sweeperWidget, SIGNAL(triggerFlagAction(QPoint)), sweeperGame, SLOT(doFlagAction(QPoint)));
-        connect(sweeperWidget, SIGNAL(triggerQuitAction()), sweeperGame, SLOT(doQuitAction()));
-        connect(sweeperWidget, SIGNAL(triggerRevealAction(QPoint)), sweeperGame, SLOT(doRevealAction(QPoint)));
-        connect(sweeperWidget, SIGNAL(triggerRevealAdjacentAction(QPoint), sweeperGame,
-                                      SLOT(doRevealAdjacentAction(QPoint));
-        connect(sweeperWidget, SIGNAL(triggerQuitAction()), )
+        connect(sweeperWidget, SIGNAL(triggerFlagAction(QPoint)), this, SLOT(doFlagAction(QPoint)));
+        connect(sweeperWidget, SIGNAL(triggerQuitAction()), this, SLOT(doQuitAction()));
+        connect(sweeperWidget, SIGNAL(triggerRevealAction(QPoint)), this, SLOT(doRevealAction(QPoint)));
+        connect(sweeperWidget, SIGNAL(triggerRevealAdjacentAction(QPoint)), this, SLOT(doRevealAdjacentAction(QPoint)));
+        connect(sweeperWidget, SIGNAL(triggerQuitAction()), this, SLOT(doQuitAction()));
     }
 }
 

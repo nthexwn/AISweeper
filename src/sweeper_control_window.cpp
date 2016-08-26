@@ -19,6 +19,9 @@ SweeperControlWindow::SweeperControlWindow(QWidget* parent) : QMainWindow(parent
     lastUsedBatchSettings = new SweeperBatchSettings(this);
     defaultBatchSettings = new SweeperBatchSettings(this);
 
+    // Instantiate the map which we'll use to track game widgets
+    sweeperWidgets = new QHash<int, SweeperWidget*>();
+
     // Create the batch manager and assign it to its own thread
     batchManager = new SweeperBatchManager();
     batchManagerThread = new QThread();
@@ -29,11 +32,11 @@ SweeperControlWindow::SweeperControlWindow(QWidget* parent) : QMainWindow(parent
             this, SLOT(doBatchDone()));
     connect(batchManager, SIGNAL(triggerBatchLaunched()),
             this, SLOT(doBatchLaunched()));
-    connect(batchManager, SIGNAL(triggerDeleteSweeperWidget(SweeperWidget*, int),
+    connect(batchManager, SIGNAL(triggerDeleteSweeperWidget(SweeperWidget*, int)),
             this, SLOT(doDeleteSweeperWidget(SweeperWidget*, int)));
-    connect(batchManager, SIGNAL(triggerGenerateSweeperWidget(SweeperModel*, int),
-            this, SLOT(doGenerateSweeperWidget(SweeperModel*, int));
-    connect(batchManager, SIGNAL(triggerShowSweeperWidget(SweeperWidget*),
+    connect(batchManager, SIGNAL(triggerGenerateSweeperWidget(SweeperModel*, int)),
+            this, SLOT(doGenerateSweeperWidget(SweeperModel*, int)));
+    connect(batchManager, SIGNAL(triggerShowSweeperWidget(SweeperWidget*)),
             this, SLOT(doShowSweeperWidget(SweeperWidget*)));
     connect(batchManager, SIGNAL(triggerUpdateOverview(SweeperBatchStatus*)),
             this, SLOT(doUpdateOverview(SweeperBatchStatus*)));
@@ -86,7 +89,7 @@ void SweeperControlWindow::doBatchDone()
     {
         // Since the last batch just finished we know it's safe to delete the batch manager and stop its thread.
         batchManager->deleteLater();
-        batchManagerThread->quit;
+        batchManagerThread->quit();
         batchManagerThread->deleteLater();
 
         // We're now ready to delete the control window as well.
@@ -119,18 +122,31 @@ void SweeperControlWindow::doBatchLaunched()
     update();
 }
 
-void SweeperControlWindow::doSweeperWidgetDeletion(int index)
+void SweeperControlWindow::doGenerateSweeperWidget(SweeperModel* sweeperModel, int index)
+{
+    SweeperWidget* widget = new SweeperWidget(sweeperModel);
+    emit triggerSweeperWidgetGenerated(widget, index);
+}
+
+void SweeperControlWindow::doShowSweeperWidget(int index)
+{
+    SweeperWidget* widget = sweeperWidgets->find(index).value();
+    widget->show();
+}
+
+void SweeperControlWindow::doDeleteSweeperWidget(int index)
 {
     // Since Qt forces all GUI objects to be handled in the main thread we have to delete the widgets for each game
     // here.
-    delete sweeperWidgets[index];
+    delete sweeperWidgets->find(index).value();
+    emit triggerSweeperWidgetDeleted(index);
 }
 
 // Triggered by batch manager whenever batch status information has been modified (IE: games completed count changes)
 void SweeperControlWindow::doUpdateOverview(SweeperBatchStatus* latestBatchStatus)
 {
-    // Copy the latest batch status in order to prevent it from changing again in the middle of the update
     latestBatchStatus->copyTo(batchStatus);
+    delete latestBatchStatus;
 
     // Update state
     switch(batchStatus->batchState)

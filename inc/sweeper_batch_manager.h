@@ -19,9 +19,9 @@ signals:
     void triggerBatchLaunched();
     void triggerSetupGame();
     void triggerSetupPlayer();
-    void triggerStartGame();
-    void triggerTeardownGame();
-    void triggerTeardownPlayer();
+    void triggerStartPlayer();
+    void triggerKillGames();
+    void triggerKillPlayers();
     void triggerDeleteSweeperWidget(SweeperWidget* sweeperWidget, int index);
     void triggerGenerateSweeperWidget(SweeperModel* sweeperModel, int index);
     void triggerShowSweeperWidget(SweeperWidget* sweeperWidget);
@@ -58,9 +58,9 @@ private:
         QPointer<QThread> thread;
         GameControlGroup()
         {
-            gameReady = INACTIVE;
-            widgetReady = INACTIVE;
-            playerReady = INACTIVE;
+            gameControlState = INACTIVE;
+            widgetControlState = INACTIVE;
+            playerControlState = INACTIVE;
         }
     };
     GameControlGroup** gameControlGroups;
@@ -68,8 +68,8 @@ private:
     SweeperBatchStatus* batchStatus;
     bool terminationRequested;
     int threadsInBatch;
-    createObjectsForNewGame(int index);
-    startGameIfReady(int index);
+    void createObjectsForNewGame(int index);
+    void startGameIfReady(int index);
 };
 
 #endif // SWEEPER_BATCH_MANAGER_H
