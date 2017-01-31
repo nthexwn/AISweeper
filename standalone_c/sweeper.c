@@ -1,9 +1,4 @@
-#include <linux/random.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/syscall.h>
-#include <unistd.h>
+#include "sweeper.h"
 
 /*
 Position Scheme:
@@ -72,7 +67,7 @@ void setRevealed(unsigned char* position, bool value)
 
 // TODO: Break this out into its own encapsulated file+function.  Main will then be used as an API layer between the
 // user and this encapsulated game instance.
-int main()
+int start_game()
 {
    // Variables to set once
    unsigned char* field_begin; // Pointer to first position char in field.

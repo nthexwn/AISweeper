@@ -82,8 +82,9 @@ Thumbs.db
 # [Manual]
 # --------
 
-*.pro.user
+interface
 *.out
+*.pro.user
 
 # --------
 # [/Manual]
