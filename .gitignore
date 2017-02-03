@@ -82,7 +82,7 @@ Thumbs.db
 # [Manual]
 # --------
 
-interface
+exe
 *.out
 *.pro.user
 

@@ -2,6 +2,6 @@
 
 int main()
 {
-   return start_game();
+   return start_game(24, 30, 200);
 }
 
