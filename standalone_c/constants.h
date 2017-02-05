@@ -3,10 +3,10 @@
 
 // Bit flags for position scheme
 extern const unsigned char BIT_ADJACENTS;
-extern const unsigned char BIT_CHECKED;
 extern const unsigned char BIT_MINED;
 extern const unsigned char BIT_FLAGGED;
 extern const unsigned char BIT_REVEALED;
+extern const unsigned char BIT_UNUSED;
 
 // Parameter extern constraints for new game
 extern const unsigned char NEW_GAME_MIN_HEIGHT;
@@ -14,6 +14,12 @@ extern const unsigned char NEW_GAME_MIN_WIDTH;
 extern const unsigned char NEW_GAME_MAX_HEIGHT;
 extern const unsigned char NEW_GAME_MAX_WIDTH;
 extern const unsigned char NEW_GAME_MIN_MINES;
+
+// Game status codes
+extern const unsigned char GAME_STATUS_NOT_IN_PROGRESS;
+extern const unsigned char GAME_STATUS_IN_PROGRESS;
+extern const unsigned char GAME_STATUS_LOST;
+extern const unsigned char GAME_STATUS_WON;
 
 // Error codes for general program execution
 extern const unsigned char GENERAL_NO_ERROR;
@@ -45,7 +51,7 @@ extern const unsigned char FLAG_X_COORDINATE_TOO_LOW;
 extern const unsigned char FLAG_X_COORDINATE_TOO_HIGH;
 extern const unsigned char FLAG_Y_COORDINATE_TOO_LOW;
 extern const unsigned char FLAG_Y_COORDINATE_TOO_HIGH;
-extern const unsigned char FLAG_ALREADY_REVEALED;
+extern const unsigned char FLAG_REVEALED_CANNOT_FLAG;
 extern const unsigned char FLAG_ALREADY_FLAGGED;
 extern const unsigned char FLAG_UNEXPECTED_ERROR;
 
@@ -56,7 +62,7 @@ extern const unsigned char UNFLAG_X_COORDINATE_TOO_LOW;
 extern const unsigned char UNFLAG_X_COORDINATE_TOO_HIGH;
 extern const unsigned char UNFLAG_Y_COORDINATE_TOO_LOW;
 extern const unsigned char UNFLAG_Y_COORDINATE_TOO_HIGH;
-extern const unsigned char UNFLAG_REVEALED_CANNOT_FLAG;
+extern const unsigned char UNFLAG_REVEALED_CANNOT_UNFLAG;
 extern const unsigned char UNFLAG_NOT_FLAGGED;
 extern const unsigned char UNFLAG_UNEXPECTED_ERROR;
 

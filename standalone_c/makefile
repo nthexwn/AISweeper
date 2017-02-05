@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -std=c11
-HEADERS = constants.h sweeper.h
-OBJECTS = constants.o interface.o sweeper.o
+HEADERS = constants.h mt19937.h sweeper.h
+OBJECTS = constants.o interface.o mt19937.o sweeper.o
 
 #Explanations for auto-generated object compilation target syntax:                                                \
 "%.o: %.c"   - For every dependency "foo.o" listed in another build target generate a new target that depends on  \

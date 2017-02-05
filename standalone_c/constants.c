@@ -1,10 +1,10 @@
 #include "constants.h"
 
 const unsigned char BIT_ADJACENTS = 0x0fu;
-const unsigned char BIT_CHECKED = 0x10u;
-const unsigned char BIT_MINED = 0x20u;
-const unsigned char BIT_FLAGGED = 0x40u;
-const unsigned char BIT_REVEALED = 0x80u;
+const unsigned char BIT_MINED = 0x10u;
+const unsigned char BIT_FLAGGED = 0x20u;
+const unsigned char BIT_REVEALED = 0x40u;
+const unsigned char BIT_UNUSED = 0x80u;
 
 // Parameter constraints for new game
 const unsigned char NEW_GAME_MIN_HEIGHT = 9;
@@ -12,6 +12,12 @@ const unsigned char NEW_GAME_MIN_WIDTH = 9;
 const unsigned char NEW_GAME_MAX_HEIGHT = 24;
 const unsigned char NEW_GAME_MAX_WIDTH = 30;
 const unsigned char NEW_GAME_MIN_MINES = 10;
+
+// Game status codes
+const unsigned char GAME_STATUS_NOT_IN_PROGRESS = 0;
+const unsigned char GAME_STATUS_IN_PROGRESS = 1;
+const unsigned char GAME_STATUS_LOST = 2;
+const unsigned char GAME_STATUS_WON = 3;
 
 // Error codes for general program execution
 const unsigned char GENERAL_NO_ERROR = 0;
@@ -43,8 +49,9 @@ const unsigned char FLAG_X_COORDINATE_TOO_LOW = 43;
 const unsigned char FLAG_X_COORDINATE_TOO_HIGH = 44;
 const unsigned char FLAG_Y_COORDINATE_TOO_LOW = 45;
 const unsigned char FLAG_Y_COORDINATE_TOO_HIGH = 45;
-const unsigned char FLAG_ALREADY_REVEALED = 46;
+const unsigned char FLAG_REVEALED_CANNOT_FLAG = 46;
 const unsigned char FLAG_ALREADY_FLAGGED = 47;
+const unsigned char FLAG_UNEXPECTED_ERROR = 48;
 
 // Error codes for 'unflag' calls
 const unsigned char UNFLAG_GAME_NOT_IN_PROGRESS = 51;
@@ -53,7 +60,7 @@ const unsigned char UNFLAG_X_COORDINATE_TOO_LOW = 53;
 const unsigned char UNFLAG_X_COORDINATE_TOO_HIGH = 54;
 const unsigned char UNFLAG_Y_COORDINATE_TOO_LOW = 55;
 const unsigned char UNFLAG_Y_COORDINATE_TOO_HIGH = 56;
-const unsigned char UNFLAG_REVEALED_CANNOT_FLAG = 57;
+const unsigned char UNFLAG_REVEALED_CANNOT_UNFLAG = 57;
 const unsigned char UNFLAG_NOT_FLAGGED = 58;
 const unsigned char UNFLAG_UNEXPECTED_ERROR = 59;
 
