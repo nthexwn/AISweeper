@@ -24,6 +24,19 @@ static Node* mbla_tail; // Modified by last action list used to return specific 
 static unsigned char game_status; // Status code indicating current game state.
 static struct timespec time_started; // Time elapsed between thread start and when the game was started.
 
+// Helper function for clearing linked lists
+static void clear_list(Node* list_head, Node* list_tail)
+{
+   while(list_head != NULL)
+   {
+      Node* list_free = list_head;
+      list_head = list_head->next;
+      free(list_free);
+      list_free = NULL;
+   }
+   list_tail = NULL;
+}
+
 // Internal getters and setters for position data
 static unsigned char get_adjacent(unsigned char *position)
 {
@@ -155,7 +168,6 @@ static void first_reveal_setup(unsigned char x, unsigned char y)
    // default implementation of the standard 'rand' function.
    long urand;
    syscall(SYS_getrandom, &urand, sizeof(long), 0);
-   //srand(urand);
    seed_mt19937(urand);
    mines_not_flagged = current_mines;
    unsigned short mines_placed = 0;
@@ -173,7 +185,6 @@ static void first_reveal_setup(unsigned char x, unsigned char y)
       // technically an O(N) operation each traverse will take less and less time since the unmined list will
       // continue to shorten as more mines are placed.  This is also guaranteed to work without collisions, and
       // the bounds on N are fairly trivial since the playing field has relatively small maximum dimensions.
-      //unsigned short random_number = (unsigned short)rand();
       unsigned short random_number = (unsigned short)extract_mt19937();
       unsigned short positions_left_to_traverse = random_number % (unmined_positions_remaining - 1);
       if(positions_left_to_traverse == 0)
@@ -212,6 +223,31 @@ static void first_reveal_setup(unsigned char x, unsigned char y)
    first_reveal_setup_performed = true;
 }
 
+// Helper method for reveal actions.  Used to reveal unmined nodes in a specificed direction adjacent to the
+// current position at the head of the reveal queue.  The x_mod and y_mod characters determine the direction.  If
+// the directional position is also not adjacent to any other mines then it will be added to the tail of the
+// reveal queue.  Subsequent calls to this function will be made for every direction surrounding every position in
+// the reveal queue.  Utilizing this queue structure is slightly less memory and performance intensive than making
+// these calls recursively would be.
+static void handle_reveal_queue_direction(Node** rq_head, Node** rq_tail, char x_mod, char y_mod)
+{
+   unsigned char* position = field_begin + current_width * ((*rq_head)->y + y_mod) + (*rq_head)->x + x_mod;
+   if(!is_mined(position) && !is_revealed(position))
+   {
+      set_revealed(position, true);
+      mbla_tail->next = (Node*)malloc(sizeof(Node));
+      *mbla_tail->next = (Node){position, (*rq_head)->x + x_mod, (*rq_head)->y + y_mod, NULL};
+      mbla_tail = mbla_tail->next;
+      unmined_positions_remaining--;
+      if(get_adjacent(position) == 0)
+      {
+         (*rq_tail)->next = (Node*)malloc(sizeof(Node));
+         *(*rq_tail)->next = (Node){position, (*rq_head)->x + x_mod, (*rq_head)->y + y_mod, NULL};
+         *rq_tail = (*rq_tail)->next;
+      }
+   }
+}
+
 unsigned char start_game(unsigned char height, unsigned char width, unsigned short mines)
 {
    // Error handling
@@ -241,8 +277,8 @@ unsigned char start_game(unsigned char height, unsigned char width, unsigned sho
    // address of the start of the playing field and the width of the playing field.
    field_begin = (unsigned char*)calloc(height * width, sizeof(unsigned char));
 
-   // Initialize the non-mined non-revealed linked list.  At this point every position on the playing field belongs
-   // in this list since nothing has been revealed and no mines have been placed yet.
+   // Initialize the non-mined linked list.  At this point every position on the playing field belongs in this
+   // list since no mines have been placed yet.
    nm_head = (Node*)malloc(sizeof(Node));
    *nm_head = (Node){0};
    nm_tail = nm_head;
@@ -252,7 +288,7 @@ unsigned char start_game(unsigned char height, unsigned char width, unsigned sho
       {
          unsigned char* position = field_begin + width * y + x;
          nm_tail->next = (Node*)malloc(sizeof(Node));
-         *(nm_tail->next) = (Node){position, x, y, NULL};
+         *nm_tail->next = (Node){position, x, y, NULL};
          nm_tail = nm_tail->next;
       }
    }
@@ -285,8 +321,14 @@ unsigned char reveal(unsigned char x, unsigned char y)
       first_reveal_setup(x, y);
    }
 
+   // Clear modified by last action list prior to adding positions which will be modified by this reveal action.
+   clear_list(mbla_head, mbla_tail);
+
    // Perform reveal
    set_revealed(position, true);
+   mbla_head = (Node*)malloc(sizeof(Node));
+   *mbla_head = (Node){position, x, y, NULL};
+   mbla_tail = mbla_head;
    if(is_mined(position))
    {
       // Boom!
@@ -307,123 +349,43 @@ unsigned char reveal(unsigned char x, unsigned char y)
    {
       if(rq_head->x > 0 && rq_head->y > 0)
       {
-         unsigned char* above_left = field_begin + current_width * (rq_head->y - 1) + rq_head->x - 1;
-         if(!is_mined(above_left) && !is_revealed(above_left))
-         {
-            set_revealed(above_left, true);
-            unmined_positions_remaining--;
-            if(get_adjacent(above_left) == 0)
-            {
-               rq_tail->next = (Node*)malloc(sizeof(Node));
-               *rq_tail->next = (Node){above_left, rq_head->x - 1, rq_head->y - 1, NULL};
-               rq_tail = rq_tail->next;
-            }
-         }
+         // Above left
+         handle_reveal_queue_direction(&rq_head, &rq_tail, -1, -1);
       }
       if(rq_head->y > 0)
       {
-         unsigned char* above = field_begin + current_width * (rq_head->y - 1) + rq_head->x;
-         if(!is_mined(above) && !is_revealed(above))
-         {
-            set_revealed(above, true);
-            unmined_positions_remaining--;
-            if(get_adjacent(above) == 0)
-            {
-               rq_tail->next = (Node*)malloc(sizeof(Node));
-               *rq_tail->next = (Node){above, rq_head->x, rq_head->y - 1, NULL};
-               rq_tail = rq_tail->next;
-            }
-         }
+         // Above
+         handle_reveal_queue_direction(&rq_head, &rq_tail, 0, -1);
       }
       if(rq_head->x < current_width - 1 && rq_head->y > 0)
       {
-         unsigned char* above_right = field_begin + current_width * (rq_head->y - 1) + rq_head->x + 1;
-         if(!is_mined(above_right) && !is_revealed(above_right))
-         {
-            set_revealed(above_right, true);
-            unmined_positions_remaining--;
-            if(get_adjacent(above_right) == 0)
-            {
-               rq_tail->next = (Node*)malloc(sizeof(Node));
-               *rq_tail->next = (Node){above_right, rq_head->x + 1, rq_head->y - 1, NULL};
-               rq_tail = rq_tail->next;
-            }
-         }
+         // Above right
+         handle_reveal_queue_direction(&rq_head, &rq_tail, 1, -1);
       }
       if(rq_head->x > 0)
       {
-         unsigned char* left = field_begin + current_width * rq_head->y + rq_head->x - 1;
-         if(!is_mined(left) && !is_revealed(left))
-         {
-            set_revealed(left, true);
-            unmined_positions_remaining--;
-            if(get_adjacent(left) == 0)
-            {
-               rq_tail->next = (Node*)malloc(sizeof(Node));
-               *rq_tail->next = (Node){left, rq_head->x - 1, rq_head->y, NULL};
-               rq_tail = rq_tail->next;
-            }
-         }
+         // Left
+         handle_reveal_queue_direction(&rq_head, &rq_tail, -1, 0);
       }
       if(rq_head->x < current_width - 1)
       {
-         unsigned char* right = field_begin + current_width * rq_head->y + rq_head->x + 1;
-         if(!is_mined(right) && !is_revealed(right))
-         {
-            set_revealed(right, true);
-            unmined_positions_remaining--;
-            if(get_adjacent(right) == 0)
-            {
-               rq_tail->next = (Node*)malloc(sizeof(Node));
-               *rq_tail->next = (Node){right, rq_head->x + 1, rq_head->y, NULL};
-               rq_tail = rq_tail->next;
-            }
-         }
+         // Right
+         handle_reveal_queue_direction(&rq_head, &rq_tail, 1, 0);
       }
       if(rq_head->x > 0 && rq_head->y < current_height - 1)
       {
-         unsigned char* below_left = field_begin + current_width * (rq_head->y + 1) + rq_head->x - 1;
-         if(!is_mined(below_left) && !is_revealed(below_left))
-         {
-            set_revealed(below_left, true);
-            unmined_positions_remaining--;
-            if(get_adjacent(below_left) == 0)
-            {
-               rq_tail->next = (Node*)malloc(sizeof(Node));
-               *rq_tail->next = (Node){below_left, rq_head->x - 1, rq_head->y + 1, NULL};
-               rq_tail = rq_tail->next;
-            }
-         }
+         // Below left
+         handle_reveal_queue_direction(&rq_head, &rq_tail, -1, 1);
       } 
       if(rq_head->y < current_height - 1)
       {
-         unsigned char* below = field_begin + current_width * (rq_head->y + 1) + rq_head->x;
-         if(!is_mined(below) && !is_revealed(below))
-         {
-            set_revealed(below, true);
-            unmined_positions_remaining--;
-            if(get_adjacent(below) == 0)
-            {
-               rq_tail->next = (Node*)malloc(sizeof(Node));
-               *rq_tail->next = (Node){below, rq_head->x, rq_head->y + 1, NULL};
-               rq_tail = rq_tail->next;
-            }
-         }
+         // Below
+         handle_reveal_queue_direction(&rq_head, &rq_tail, 0, 1);
       }
       if(rq_head->x < current_width - 1 && rq_head->y < current_height - 1)
       {
-         unsigned char* below_right = field_begin + current_width * (rq_head->y + 1) + rq_head->x + 1;
-         if(!is_mined(below_right) && !is_revealed(below_right))
-         {
-            set_revealed(below_right, true);
-            unmined_positions_remaining--;
-            if(get_adjacent(below_right) == 0)
-            {
-               rq_tail->next = (Node*)malloc(sizeof(Node));
-               *rq_tail->next = (Node){below_right, rq_head->x + 1, rq_head->y + 1, NULL};
-               rq_tail = rq_tail->next;
-            }
-         }
+         // Below right
+         handle_reveal_queue_direction(&rq_head, &rq_tail, 1, 1);
       }
 
       // Chop off the reveal queue head and advance to the next position
@@ -455,14 +417,7 @@ unsigned char flag(unsigned char x, unsigned char y)
    mines_not_flagged--;
 
    // Update modified positions list to reflect this action
-   mbla_tail = NULL;
-   while(mbla_head != NULL)
-   {
-      Node* mbla_free = mbla_head;
-      mbla_head = mbla_head->next;
-      free(mbla_free);
-      mbla_free = NULL;
-   }
+   clear_list(mbla_head, mbla_tail);
    mbla_head = (Node*)malloc(sizeof(Node));
    *mbla_head = (Node){position, x, y, NULL};
    mbla_tail = mbla_head;
@@ -485,14 +440,7 @@ unsigned char unflag(unsigned char x, unsigned char y)
    mines_not_flagged++;
 
    // Update modified positions list to reflect this action
-   mbla_tail = NULL;
-   while(mbla_head != NULL)
-   {
-      Node* mbla_free = mbla_head;
-      mbla_head = mbla_head->next;
-      free(mbla_free);
-      mbla_free = NULL;
-   }
+   clear_list(mbla_head, mbla_tail);
    mbla_head = (Node*)malloc(sizeof(Node));
    *mbla_head = (Node){position, x, y, NULL};
    mbla_tail = mbla_head; 
@@ -508,26 +456,13 @@ unsigned char quit()
    first_reveal_setup_performed = false;
    mines_not_flagged = 0;
    unmined_positions_remaining = 0;
+   current_mines = 0;
    current_height = 0;
    current_width = 0;
    free(field_begin);
    field_begin = NULL;
-   while(nm_head != NULL)
-   {
-      Node* nm_free = nm_head;
-      nm_head = nm_head->next;
-      free(nm_free);
-      nm_free = NULL;
-   }
-   nm_tail = NULL;
-   while(mbla_head != NULL)
-   {
-      Node* mbla_free = mbla_head;
-      mbla_head = mbla_head->next;
-      free(mbla_free);
-      mbla_free = NULL;
-   }
-   mbla_tail = NULL;
+   clear_list(nm_head, nm_tail);
+   clear_list(mbla_head, mbla_tail);
    game_status = GAME_STATUS_NOT_IN_PROGRESS;
    memset(&time_started, 0, sizeof(struct timespec));
    return GENERAL_NO_ERROR;
