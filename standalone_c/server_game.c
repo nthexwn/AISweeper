@@ -1,15 +1,42 @@
-#include "sweeper.h"
+#define _GNU_SOURCE
 
-// Linked list structure for playing field positions
-typedef struct node
-{
+#include <stdio.h> // For temporary output
+#include <string.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <sys/syscall.h>
+#include <time.h>
+#include <unistd.h>
+#include "constants.h"
+#include "mt19937.h"
+#include "server_game.h"
+
+// Linked list structure for playing field positions.  Ref_nodes refer to the actual contents of the playing field on
+// the server.  They should only be used internally by the core game functions so that the client cannot cheat by
+// inspecting the true contents of the playing field (IE: whether or not a position contains a mine or an unrevealed
+// position has adjacent mines).
+typedef struct ref_node
+{  
    unsigned char* position;
    unsigned char x;
-   unsigned char y;
-   struct node* next;
-} Node;
+   unsigned char y; 
+   struct ref_node* next;
+} Ref_node;
 
-// Game variables which are shared between functions
+// Helper function for clearing linked lists.
+void clear_ref_list(Ref_node* ref_head, Ref_node* ref_tail)
+{
+   while(ref_head != NULL)
+   {
+      Ref_node* ref_free = ref_head;
+      ref_head = ref_head->next;
+      free(ref_free);
+      ref_free = NULL;
+   }
+   ref_tail = NULL;
+}
+
+// Game variables which are shared between functions.
 static bool first_reveal_setup_performed; // Mines won't be placed until the player has performed a reveal.
 static short mines_not_flagged; // Number of mines which haven't been flagged.  Can be negative.
 static unsigned short unmined_positions_remaining; // Number of positions which the player must reveal to win.
@@ -17,30 +44,15 @@ static unsigned short current_mines; // Number of mines on the playing field aft
 static unsigned char current_height; // Current height of the playing field.
 static unsigned char current_width; // Current width of the playing field.
 static unsigned char* field_begin; // Pointer to first position char in field.
-static Node* nm_head; // Not-mined list used to track available positions for random mine placement.
-static Node* nm_tail; // Not-mined list used to track available positions for random mine placement.
-static Node* mbla_head; // Modified by last action list used to return specific results of actions to client.
-static Node* mbla_tail; // Modified by last action list used to return specific results of actions to client.
+static Ref_node* nm_head; // Not-mined list used to track available positions for random mine placement and victory.
+static Ref_node* nm_tail; // Not-mined list used to track available positions for random mine placement and victory.
 static unsigned char game_status; // Status code indicating current game state.
 static struct timespec time_started; // Time elapsed between thread start and when the game was started.
 
-// Helper function for clearing linked lists
-static void clear_list(Node* list_head, Node* list_tail)
-{
-   while(list_head != NULL)
-   {
-      Node* list_free = list_head;
-      list_head = list_head->next;
-      free(list_free);
-      list_free = NULL;
-   }
-   list_tail = NULL;
-}
-
-// Internal getters and setters for position data
+// Internal getters and setters for position data.
 static unsigned char get_adjacent(unsigned char *position)
 {
-   return *position & BIT_ADJACENTS;
+   return *position & BITS_ADJACENT;
 }
 static void set_adjacent(unsigned char* position, unsigned char adjacent_mines)
 {
@@ -139,21 +151,21 @@ static void first_reveal_setup(unsigned char x, unsigned char y)
    // during generation.  This prevents the player from unfairly blowing up on their first reveal.
    if(x == 0 && y == 0)
    {
-      Node* nm_free = nm_head;
+      Ref_node* nm_free = nm_head;
       nm_head = nm_head->next;
       free(nm_free);
       nm_free = NULL;
    }
    else
    {
-      Node* nm_index = nm_head;
+      Ref_node* nm_index = nm_head;
       unsigned short positions_left_to_traverse = current_width * y + x;
       while(positions_left_to_traverse > 1)
       {
          nm_index = nm_index->next;
          positions_left_to_traverse--;
       }
-      Node* nm_free = nm_index->next;
+      Ref_node* nm_free = nm_index->next;
       nm_index->next = nm_index->next->next;
       free(nm_free);
       nm_free = NULL;
@@ -190,21 +202,21 @@ static void first_reveal_setup(unsigned char x, unsigned char y)
       if(positions_left_to_traverse == 0)
       {
          set_mined(nm_head->position, true);
-         Node* nm_free = nm_head;
+         Ref_node* nm_free = nm_head;
          nm_head = nm_head->next;
          free(nm_free);
          nm_free = NULL;
       }
       else
       {
-         Node* nm_index = nm_head;
+         Ref_node* nm_index = nm_head;
          while(positions_left_to_traverse > 1)
          {
             nm_index = nm_index->next;
             positions_left_to_traverse--;
          }
          set_mined(nm_index->next->position, true);
-         Node* nm_free = nm_index->next;
+         Ref_node* nm_free = nm_index->next;
          nm_index->next = nm_index->next->next;
          free(nm_free);
          nm_free = NULL;
@@ -216,10 +228,10 @@ static void first_reveal_setup(unsigned char x, unsigned char y)
    // Now that the mines have all been placed we can calculate the adjacency data for unmined positions;
    calculate_adjacency_data();
    
-   // Start the timer
+   // Start the timer.
    clock_gettime(CLOCK_MONOTONIC, &time_started);
 
-   // Return to reveal function
+   // Return to reveal function.
    first_reveal_setup_performed = true;
 }
 
@@ -228,45 +240,48 @@ static void first_reveal_setup(unsigned char x, unsigned char y)
 // the directional position is also not adjacent to any other mines then it will be added to the tail of the
 // reveal queue.  Subsequent calls to this function will be made for every direction surrounding every position in
 // the reveal queue.  Utilizing this queue structure is slightly less memory and performance intensive than making
-// these calls recursively would be.
-static void handle_reveal_queue_direction(Node** rq_head, Node** rq_tail, char x_mod, char y_mod)
+// these calls recursively would be.  Each time this method is called the revealed position will be added to the
+// modified by last action list (mbla) which is ultimately returned to the client.
+static void handle_reveal_queue_direction(Ref_node** rq_head, Ref_node** rq_tail, Copy_node** mbla_tail, char x_mod,
+                                          char y_mod)
 {
    unsigned char* position = field_begin + current_width * ((*rq_head)->y + y_mod) + (*rq_head)->x + x_mod;
    if(!is_mined(position) && !is_revealed(position))
    {
+      // Note that since the positions modified here are already revealed that we don't need to perform any filtering
+      // of mine or adjacency info when adding these positions to the modified by last action list.
       set_revealed(position, true);
-      mbla_tail->next = (Node*)malloc(sizeof(Node));
-      *mbla_tail->next = (Node){position, (*rq_head)->x + x_mod, (*rq_head)->y + y_mod, NULL};
-      mbla_tail = mbla_tail->next;
+      (*mbla_tail)->next = (Copy_node*)malloc(sizeof(Copy_node));
+      *(*mbla_tail)->next = (Copy_node){*position, (*rq_head)->x + x_mod, (*rq_head)->y + y_mod, NULL};
+      *mbla_tail = (*mbla_tail)->next;
       unmined_positions_remaining--;
       if(get_adjacent(position) == 0)
       {
-         (*rq_tail)->next = (Node*)malloc(sizeof(Node));
-         *(*rq_tail)->next = (Node){position, (*rq_head)->x + x_mod, (*rq_head)->y + y_mod, NULL};
+         (*rq_tail)->next = (Ref_node*)malloc(sizeof(Ref_node));
+         *(*rq_tail)->next = (Ref_node){position, (*rq_head)->x + x_mod, (*rq_head)->y + y_mod, NULL};
          *rq_tail = (*rq_tail)->next;
       }
    }
 }
 
-unsigned char start_game(unsigned char height, unsigned char width, unsigned short mines)
+Game_info start_game(unsigned char height, unsigned char width, unsigned short mines)
 {
-   // Error handling
-   if(height < NEW_GAME_MIN_HEIGHT) return START_GAME_HEIGHT_TOO_SMALL;
-   if(height > NEW_GAME_MAX_HEIGHT) return START_GAME_HEIGHT_TOO_LARGE;
-   if(width < NEW_GAME_MIN_WIDTH) return START_GAME_WIDTH_TOO_SMALL;
-   if(width > NEW_GAME_MAX_WIDTH) return START_GAME_WIDTH_TOO_LARGE;
-   if(mines < NEW_GAME_MIN_MINES) return START_GAME_NOT_ENOUGH_MINES;
-   if(mines > (height - 1) * (width - 1)) return START_GAME_TOO_MANY_MINES;
+   // Error handling.
+   if(game_status != GAME_STATUS_NOT_IN_PROGRESS) return (Game_info){START_GAME_ALREADY_IN_PROGRESS};
+   if(height < NEW_GAME_MIN_HEIGHT) return (Game_info){START_GAME_HEIGHT_TOO_SMALL};
+   if(height > NEW_GAME_MAX_HEIGHT) return (Game_info){START_GAME_HEIGHT_TOO_LARGE};
+   if(width < NEW_GAME_MIN_WIDTH) return (Game_info){START_GAME_WIDTH_TOO_SMALL};
+   if(width > NEW_GAME_MAX_WIDTH) return (Game_info){START_GAME_WIDTH_TOO_LARGE};
+   if(mines < NEW_GAME_MIN_MINES) return (Game_info){START_GAME_NOT_ENOUGH_MINES};
+   if(mines > (height - 1) * (width - 1)) return (Game_info){START_GAME_TOO_MANY_MINES};
 
-   // Initialize shared variables
+   // Initialize shared variables.
    first_reveal_setup_performed = false;
    mines_not_flagged = mines;
    unmined_positions_remaining = height * width;
    current_mines = mines;
    current_height = height;
    current_width = width;
-   mbla_head = NULL;
-   mbla_tail = NULL;
 
    // Allocate memory for playing field.  Note that each position on the field is represented by a single
    // character where the individual bits in that character are utilized for an adjacent mine count, mined flag,
@@ -279,41 +294,71 @@ unsigned char start_game(unsigned char height, unsigned char width, unsigned sho
 
    // Initialize the non-mined linked list.  At this point every position on the playing field belongs in this
    // list since no mines have been placed yet.
-   nm_head = (Node*)malloc(sizeof(Node));
-   *nm_head = (Node){0};
+   nm_head = (Ref_node*)malloc(sizeof(Ref_node));
+   *nm_head = (Ref_node){0};
    nm_tail = nm_head;
    for(int y = 0; y < height; y++)
    {
       for(int x = 0; x < width; x++)
       {
          unsigned char* position = field_begin + width * y + x;
-         nm_tail->next = (Node*)malloc(sizeof(Node));
-         *nm_tail->next = (Node){position, x, y, NULL};
+         nm_tail->next = (Ref_node*)malloc(sizeof(Ref_node));
+         *nm_tail->next = (Ref_node){position, x, y, NULL};
          nm_tail = nm_tail->next;
       }
    }
-   Node* nm_free = nm_head;
+   Ref_node* nm_free = nm_head;
    nm_head = nm_head->next;
    free(nm_free);
    nm_free = NULL;
 
-   // Timer will not be started until the player performs their first reveal
+   // Timer will not be started until the player performs their first reveal.
    memset(&time_started, 0, sizeof(struct timespec));
 
    // Game is ready to play!
    game_status = GAME_STATUS_IN_PROGRESS;
-   return GENERAL_NO_ERROR;
+   return (Game_info){GENERAL_NO_ERROR, game_status, height, width, mines_not_flagged, time_started, NULL};
 }
 
-unsigned char reveal(unsigned char x, unsigned char y)
+Game_info sync_game()
 {
-   // Error handling
-   if(game_status != GAME_STATUS_IN_PROGRESS) return REVEAL_GAME_NOT_IN_PROGRESS;
-   if(game_status > GAME_STATUS_IN_PROGRESS) return REVEAL_GAME_ALREADY_FINISHED;
-   if(x >= current_width) return REVEAL_X_COORDINATE_TOO_HIGH;
-   if(y >= current_height) return REVEAL_Y_COORDINATE_TOO_HIGH;
+   // Error handling.
+   if(game_status == GAME_STATUS_NOT_IN_PROGRESS) return (Game_info){SYNC_GAME_NOT_IN_PROGRESS};
+
+   // Create a copy of the game field.
+   unsigned char* copy_field_begin = (unsigned char*)calloc(current_height * current_width, sizeof(unsigned char));
+   unsigned char* copy_field_index = copy_field_begin;
+   for(int y = 0; y < current_height; y++)
+   {
+      for(int x = 0; x < current_width; x++)
+      {
+         unsigned char position = *(field_begin + current_width * y + x);
+         if(game_status == GAME_STATUS_IN_PROGRESS && !is_revealed(&position))
+         {
+            // If the game isn't finished yet and the position is still unrevealed then we'll filter out the mine and
+            // adjacency information from the copied position data so that the client can't cheat by inspecting these
+            // details.
+            position &= ~BITS_SENSITIVE;
+         }
+         *copy_field_index = position;
+         copy_field_index++;
+      }
+   }
+
+   // Return with the current game info and copy of the game field.
+   return (Game_info){GENERAL_NO_ERROR, game_status, current_height, current_width, mines_not_flagged, time_started,
+          copy_field_begin};
+}
+
+Action_info reveal(unsigned char x, unsigned char y)
+{
+   // Error handling.
+   if(game_status == GAME_STATUS_NOT_IN_PROGRESS) return (Action_info){REVEAL_GAME_NOT_IN_PROGRESS};
+   if(game_status > GAME_STATUS_IN_PROGRESS) return (Action_info){REVEAL_GAME_ALREADY_FINISHED};
+   if(x >= current_width) return (Action_info){REVEAL_X_COORDINATE_TOO_HIGH};
+   if(y >= current_height) return (Action_info){REVEAL_Y_COORDINATE_TOO_HIGH};
    unsigned char* position = field_begin + current_width * y + x;
-   if(is_revealed(position)) return REVEAL_ALREADY_REVEALED;
+   if(is_revealed(position)) return (Action_info){REVEAL_MUST_BE_UNREVEALED};
 
    // Setup playing field if this is the first time the player has performed a reveal.
    if(!first_reveal_setup_performed)
@@ -321,26 +366,27 @@ unsigned char reveal(unsigned char x, unsigned char y)
       first_reveal_setup(x, y);
    }
 
-   // Clear modified by last action list prior to adding positions which will be modified by this reveal action.
-   clear_list(mbla_head, mbla_tail);
-
-   // Perform reveal
+   // Perform reveal.
    set_revealed(position, true);
-   mbla_head = (Node*)malloc(sizeof(Node));
-   *mbla_head = (Node){position, x, y, NULL};
-   mbla_tail = mbla_head;
+
+   // Add the revealed position to the modified by last action list.
+   Copy_node* mbla_head = (Copy_node*)malloc(sizeof(Copy_node));
+   *mbla_head = (Copy_node){*position, x, y, NULL};
+   Copy_node* mbla_tail = mbla_head;
+
+   // Find out if the player lost.
    if(is_mined(position))
    {
       // Boom!
       game_status = GAME_STATUS_LOST;
-      return GENERAL_NO_ERROR;
+      return (Action_info){GENERAL_NO_ERROR};
    }
    unmined_positions_remaining--;
  
-   // Populate the reveal queue starting with the first revealed position
-   Node* rq_head = (Node*)malloc(sizeof(Node));
-   *rq_head = (Node){position, x, y, NULL};
-   Node* rq_tail = rq_head;
+   // Populate the reveal queue starting with the first revealed position.
+   Ref_node* rq_head = (Ref_node*)malloc(sizeof(Ref_node));
+   *rq_head = (Ref_node){position, x, y, NULL};
+   Ref_node* rq_tail = rq_head;
 
    // Begin revealing additional positions and adding surrounding unmined+unrevealed+unadjacent positions to the
    // queue.  Revealing is performed first as a method of marking which positions have already been added to the
@@ -349,108 +395,94 @@ unsigned char reveal(unsigned char x, unsigned char y)
    {
       if(rq_head->x > 0 && rq_head->y > 0)
       {
-         // Above left
-         handle_reveal_queue_direction(&rq_head, &rq_tail, -1, -1);
+         // Above left.
+         handle_reveal_queue_direction(&rq_head, &rq_tail, &mbla_tail, -1, -1);
       }
       if(rq_head->y > 0)
       {
-         // Above
-         handle_reveal_queue_direction(&rq_head, &rq_tail, 0, -1);
+         // Above.
+         handle_reveal_queue_direction(&rq_head, &rq_tail, &mbla_tail, 0, -1);
       }
       if(rq_head->x < current_width - 1 && rq_head->y > 0)
       {
-         // Above right
-         handle_reveal_queue_direction(&rq_head, &rq_tail, 1, -1);
+         // Above right.
+         handle_reveal_queue_direction(&rq_head, &rq_tail, &mbla_tail, 1, -1);
       }
       if(rq_head->x > 0)
       {
-         // Left
-         handle_reveal_queue_direction(&rq_head, &rq_tail, -1, 0);
+         // Left.
+         handle_reveal_queue_direction(&rq_head, &rq_tail, &mbla_tail, -1, 0);
       }
       if(rq_head->x < current_width - 1)
       {
-         // Right
-         handle_reveal_queue_direction(&rq_head, &rq_tail, 1, 0);
+         // Right.
+         handle_reveal_queue_direction(&rq_head, &rq_tail, &mbla_tail, 1, 0);
       }
       if(rq_head->x > 0 && rq_head->y < current_height - 1)
       {
-         // Below left
-         handle_reveal_queue_direction(&rq_head, &rq_tail, -1, 1);
+         // Below left.
+         handle_reveal_queue_direction(&rq_head, &rq_tail, &mbla_tail, -1, 1);
       } 
       if(rq_head->y < current_height - 1)
       {
-         // Below
-         handle_reveal_queue_direction(&rq_head, &rq_tail, 0, 1);
+         // Below.
+         handle_reveal_queue_direction(&rq_head, &rq_tail, &mbla_tail, 0, 1);
       }
       if(rq_head->x < current_width - 1 && rq_head->y < current_height - 1)
       {
-         // Below right
-         handle_reveal_queue_direction(&rq_head, &rq_tail, 1, 1);
+         // Below right.
+         handle_reveal_queue_direction(&rq_head, &rq_tail, &mbla_tail, 1, 1);
       }
 
-      // Chop off the reveal queue head and advance to the next position
-      Node* rq_free = rq_head;
+      // Chop off the reveal queue head and advance to the next position.
+      Ref_node* rq_free = rq_head;
       rq_head = rq_head->next;
       free(rq_free);
       rq_free = NULL;
    }
    rq_tail = NULL;
 
-   // Detect win condition
+   // Detect win condition.
    if(unmined_positions_remaining == 0) game_status = GAME_STATUS_WON;
-   return GENERAL_NO_ERROR;
+
+   // Return with results of reveal action and list of revealed positions.
+   return (Action_info){GENERAL_NO_ERROR, game_status, mines_not_flagged, mbla_head};
 }
 
-unsigned char flag(unsigned char x, unsigned char y)
+Action_info toggle_flag(unsigned char x, unsigned char y)
 {
-   // Error handling
-   if(game_status != GAME_STATUS_IN_PROGRESS) return FLAG_GAME_NOT_IN_PROGRESS;
-   if(game_status > GAME_STATUS_IN_PROGRESS) return FLAG_GAME_ALREADY_FINISHED;
-   if(x >= current_width) return FLAG_X_COORDINATE_TOO_HIGH;
-   if(y >= current_height) return FLAG_Y_COORDINATE_TOO_HIGH;
+   // Error handling.
+   if(game_status == GAME_STATUS_NOT_IN_PROGRESS) return (Action_info){TOGGLE_FLAG_GAME_NOT_IN_PROGRESS};
+   if(game_status > GAME_STATUS_IN_PROGRESS) return (Action_info){TOGGLE_FLAG_GAME_ALREADY_FINISHED};
+   if(x >= current_width) return (Action_info){TOGGLE_FLAG_X_COORDINATE_TOO_HIGH};
+   if(y >= current_height) return (Action_info){TOGGLE_FLAG_Y_COORDINATE_TOO_HIGH};
    unsigned char* position = field_begin + current_width * y + x;
-   if(is_revealed(position)) return FLAG_REVEALED_CANNOT_FLAG;
-   if(is_flagged(position)) return FLAG_ALREADY_FLAGGED;
+   if(is_revealed(position)) return (Action_info){TOGGLE_FLAG_MUST_BE_UNREVEALED};
 
-   // Set flag
-   set_flagged(position, true);
-   mines_not_flagged--;
+   // Toggle the flag.
+   if(is_flagged(position))
+   {
+      set_flagged(position, false);
+      mines_not_flagged++;
+   }
+   else
+   {
+      set_flagged(position, true);
+      mines_not_flagged--;
+   }
 
-   // Update modified positions list to reflect this action
-   clear_list(mbla_head, mbla_tail);
-   mbla_head = (Node*)malloc(sizeof(Node));
-   *mbla_head = (Node){position, x, y, NULL};
-   mbla_tail = mbla_head;
-   return GENERAL_NO_ERROR;
+   // Update modified by last action list with a filtered copy of the toggled position.
+   Copy_node* mbla_head = (Copy_node*)malloc(sizeof(Copy_node));
+   *mbla_head = (Copy_node){*position & ~BITS_SENSITIVE, x, y, NULL};
+
+   // Return with results of toggle flag action and list containing toggled position.
+   return (Action_info){GENERAL_NO_ERROR, game_status, mines_not_flagged, mbla_head};
 }
 
-unsigned char unflag(unsigned char x, unsigned char y)
+Action_info quit()
 {
    // Error handling
-   if(game_status != GAME_STATUS_IN_PROGRESS) return UNFLAG_GAME_NOT_IN_PROGRESS;
-   if(game_status > GAME_STATUS_IN_PROGRESS) return UNFLAG_GAME_ALREADY_FINISHED;
-   if(x >= current_width) return UNFLAG_X_COORDINATE_TOO_HIGH;
-   if(y >= current_height) return UNFLAG_Y_COORDINATE_TOO_HIGH;
-   unsigned char* position = field_begin + current_width * y + x;
-   if(is_revealed(position)) return UNFLAG_REVEALED_CANNOT_UNFLAG;
-   if(!is_flagged(position)) return UNFLAG_NOT_FLAGGED;
-
-   // Clear flag
-   set_flagged(position, false);
-   mines_not_flagged++;
-
-   // Update modified positions list to reflect this action
-   clear_list(mbla_head, mbla_tail);
-   mbla_head = (Node*)malloc(sizeof(Node));
-   *mbla_head = (Node){position, x, y, NULL};
-   mbla_tail = mbla_head; 
-   return GENERAL_NO_ERROR;
-}
-
-unsigned char quit()
-{
-   // Error handling
-   if(game_status == GAME_STATUS_NOT_IN_PROGRESS) return QUIT_GAME_NOT_IN_PROGRESS;
+   if(game_status == GAME_STATUS_NOT_IN_PROGRESS) return (Action_info){QUIT_GAME_NOT_IN_PROGRESS};
 
    // Reset all shared variables and lists
    first_reveal_setup_performed = false;
@@ -461,11 +493,10 @@ unsigned char quit()
    current_width = 0;
    free(field_begin);
    field_begin = NULL;
-   clear_list(nm_head, nm_tail);
-   clear_list(mbla_head, mbla_tail);
+   clear_ref_list(nm_head, nm_tail);
    game_status = GAME_STATUS_NOT_IN_PROGRESS;
    memset(&time_started, 0, sizeof(struct timespec));
-   return GENERAL_NO_ERROR;
+   return (Action_info){GENERAL_NO_ERROR, game_status, mines_not_flagged, NULL};
 }
 
 // Temporary

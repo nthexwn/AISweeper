@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "mt19937.h"
 
 /*
