@@ -9,10 +9,10 @@
 // reading and writing unfiltered data directly to/from the playing field.
 typedef struct copy_node
 {
-   unsigned char position;
-   unsigned char x;
-   unsigned char y;
-   struct copy_node* next;
+  unsigned char position;
+  unsigned char x;
+  unsigned char y;
+  struct copy_node* next;
 } Copy_node;
 
 // This provides a complete top-down view of the game to the client.  It is useful for establishing the status of a
@@ -20,13 +20,13 @@ typedef struct copy_node
 // the action_info structure is used for that instead.
 typedef struct game_info
 {
-   unsigned char error_code;
-   unsigned char game_status;
-   unsigned char height;
-   unsigned char width;
-   short mines_not_flagged;
-   struct timespec time_started;
-   unsigned char* copy_field_begin;
+  Error_type error_type;
+  unsigned char game_status;
+  unsigned char height;
+  unsigned char width;
+  short mines_not_flagged;
+  struct timespec time_started;
+  unsigned char* copy_field_begin;
 } Game_info;
 
 // Data returned to client after each individual game action.  This contains the first error that was found while
@@ -38,10 +38,10 @@ typedef struct game_info
 // to re-model the entire game independently to come up with them on its own.
 typedef struct action_info
 {
-   unsigned char error_code;
-   unsigned char game_status;
-   unsigned char mines_not_flagged;
-   Copy_node* modified_positions_head;
+  Error_type error_type;
+  unsigned char game_status;
+  short mines_not_flagged;
+  Copy_node* modified_positions_head;
 } Action_info;
 
 // Starts the game on the server.  Note that the copy_field_begin returned in the game_info object will be null after
@@ -79,9 +79,9 @@ Action_info toggle_flag(unsigned char x, unsigned char y);
 // this if the client wishes to reveal the entire playing field to analyze missed mines/flags.  Upon calling the quit
 // action all of the position data on the playing field will be erased from memory, the game variables will be reset,
 // and the game status will change to GAME_STATUS_NOT_IN_PROGRESS.
-Action_info quit();
+Action_info quit_game();
 
-// Temporary display calls for testing purposes (display will ultimately be handled by client)
+// Temporary display calls for testing purposes (display will ultimately be handled by client).
 void display_as_client();
 void display_as_server();
 

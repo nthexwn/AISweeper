@@ -1,7 +1,8 @@
 #ifndef SERVER_INTERFACE_H
 #define SERVER_INTERFACE_H
 
-#include "server_game.h"
+unsigned char* obtain_command();
+void handle_response(unsigned char* response_string);
 
 #endif // SERVER_INTERFACE_H
 

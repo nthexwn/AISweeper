@@ -1,68 +1,79 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-// Bit flags for position scheme
-extern const unsigned char BITS_ADJACENT;  // 00001111
-extern const unsigned char BIT_MINED;      // 00010000
-extern const unsigned char BITS_SENSITIVE; // 00011111
-extern const unsigned char BIT_FLAGGED;    // 00100000
-extern const unsigned char BIT_REVEALED;   // 01000000
-extern const unsigned char BIT_UNUSED;     // 10000000
+// Errors.
+typedef enum error_type
+{
+  GENERAL_NO_ERROR = 0,
+  GENERAL_UNEXPECTED_ERROR = 9,
+  COMMAND_NO_INPUT = 11,
+  COMMAND_DOES_NOT_EXIST = 12,
+  COMMAND_INSUFFICIENT_ARGUMENTS = 13,
+  COMMAND_UNEXPECTED_ERROR = 19,
+  START_GAME_ALREADY_IN_PROGRESS = 21,
+  START_GAME_HEIGHT_TOO_SMALL = 22,
+  START_GAME_HEIGHT_TOO_LARGE = 23,
+  START_GAME_WIDTH_TOO_SMALL = 24,
+  START_GAME_WIDTH_TOO_LARGE = 25,
+  START_GAME_NOT_ENOUGH_MINES = 26,
+  START_GAME_TOO_MANY_MINES = 27,
+  START_GAME_UNEXPECTED_ERROR = 29,
+  SYNC_GAME_NOT_IN_PROGRESS = 31,
+  SYNC_GAME_UNEXPECTED_ERROR = 39,
+  REVEAL_GAME_NOT_IN_PROGRESS = 41,
+  REVEAL_GAME_ALREADY_FINISHED = 42,
+  REVEAL_X_COORDINATE_TOO_LOW = 43,
+  REVEAL_X_COORDINATE_TOO_HIGH = 44,
+  REVEAL_Y_COORDINATE_TOO_LOW = 45,
+  REVEAL_Y_COORDINATE_TOO_HIGH = 46,
+  REVEAL_MUST_BE_UNREVEALED = 47,
+  REVEAL_MUST_UNFLAG_FIRST = 48,
+  REVEAL_UNEXPECTED_ERROR = 49,
+  TOGGLE_FLAG_GAME_NOT_IN_PROGRESS = 51,
+  TOGGLE_FLAG_GAME_ALREADY_FINISHED = 52,
+  TOGGLE_FLAG_X_COORDINATE_TOO_LOW = 53,
+  TOGGLE_FLAG_X_COORDINATE_TOO_HIGH = 54,
+  TOGGLE_FLAG_Y_COORDINATE_TOO_LOW = 55,
+  TOGGLE_FLAG_Y_COORDINATE_TOO_HIGH = 56,
+  TOGGLE_FLAG_MUST_BE_UNREVEALED = 57,
+  TOGGLE_FLAG_UNEXPECTED_ERROR = 59,
+  QUIT_GAME_NOT_IN_PROGRESS = 61,
+  QUIT_GAME_UNEXPECTED_ERROR = 69
+} Error_type;
 
-// Parameter extern constraints for new game
+// Status.
+typedef enum status_type
+{
+  GAME_STATUS_NOT_IN_PROGRESS,
+  GAME_STATUS_IN_PROGRESS,
+  GAME_STATUS_LOST,
+  GAME_STATUS_WON
+} Status_type;
+
+// Character info.
+extern const unsigned char WIDTH_OF_CHAR;
+extern const unsigned char CHAR_NULL;
+extern const unsigned char CHAR_SPACE;
+extern const unsigned char CHAR_DELETE;
+
+// Transmission info.
+extern const unsigned short MAXIMUM_POSSIBLE_COMMAND_LENGTH;
+extern const unsigned short MAXIMUM_POSSIBLE_RESPONSE_LENGTH;
+
+// Bit flags for position scheme.
+extern const unsigned char BITS_ADJACENT;  // 0b00001111
+extern const unsigned char BIT_MINED;      // 0b00010000
+extern const unsigned char BITS_SENSITIVE; // 0b00011111
+extern const unsigned char BIT_FLAGGED;    // 0b00100000
+extern const unsigned char BIT_REVEALED;   // 0b01000000
+extern const unsigned char BIT_UNUSED;     // 0b10000000
+
+// Parameter constraints for new game.
 extern const unsigned char NEW_GAME_MIN_HEIGHT;
 extern const unsigned char NEW_GAME_MIN_WIDTH;
 extern const unsigned char NEW_GAME_MAX_HEIGHT;
 extern const unsigned char NEW_GAME_MAX_WIDTH;
 extern const unsigned char NEW_GAME_MIN_MINES;
-
-// Game status codes
-extern const unsigned char GAME_STATUS_NOT_IN_PROGRESS;
-extern const unsigned char GAME_STATUS_IN_PROGRESS;
-extern const unsigned char GAME_STATUS_LOST;
-extern const unsigned char GAME_STATUS_WON;
-
-// Error codes for general program execution
-extern const unsigned char GENERAL_NO_ERROR;
-
-// Error codes for 'start_game' calls
-extern const unsigned char START_GAME_ALREADY_IN_PROGRESS;
-extern const unsigned char START_GAME_HEIGHT_TOO_SMALL;
-extern const unsigned char START_GAME_HEIGHT_TOO_LARGE;
-extern const unsigned char START_GAME_WIDTH_TOO_SMALL;
-extern const unsigned char START_GAME_WIDTH_TOO_LARGE;
-extern const unsigned char START_GAME_NOT_ENOUGH_MINES;
-extern const unsigned char START_GAME_TOO_MANY_MINES;
-extern const unsigned char START_GAME_UNEXPECTED_ERROR;
-
-// Error codes for 'sync_game' calls
-extern const unsigned char SYNC_GAME_NOT_IN_PROGRESS;
-extern const unsigned char SYNC_GAME_UNEXPECTED_ERROR;
-
-// Error codes for 'reveal' calls
-extern const unsigned char REVEAL_GAME_NOT_IN_PROGRESS;
-extern const unsigned char REVEAL_GAME_ALREADY_FINISHED;
-extern const unsigned char REVEAL_X_COORDINATE_TOO_LOW;
-extern const unsigned char REVEAL_X_COORDINATE_TOO_HIGH;
-extern const unsigned char REVEAL_Y_COORDINATE_TOO_LOW;
-extern const unsigned char REVEAL_Y_COORDINATE_TOO_HIGH;
-extern const unsigned char REVEAL_MUST_BE_UNREVEALED;
-extern const unsigned char REVEAL_MUST_UNFLAG_FIRST;
-extern const unsigned char REVEAL_UNEXPECTED_ERROR;
-
-// Error codes for 'toggle_flag' calls
-extern const unsigned char TOGGLE_FLAG_GAME_NOT_IN_PROGRESS;
-extern const unsigned char TOGGLE_FLAG_GAME_ALREADY_FINISHED;
-extern const unsigned char TOGGLE_FLAG_X_COORDINATE_TOO_LOW;
-extern const unsigned char TOGGLE_FLAG_X_COORDINATE_TOO_HIGH;
-extern const unsigned char TOGGLE_FLAG_Y_COORDINATE_TOO_LOW;
-extern const unsigned char TOGGLE_FLAG_Y_COORDINATE_TOO_HIGH;
-extern const unsigned char TOGGLE_FLAG_MUST_BE_UNREVEALED;
-extern const unsigned char UNFLAG_UNEXPECTED_ERROR;
-
-// Error codes for 'quit' calls
-extern const unsigned char QUIT_GAME_NOT_IN_PROGRESS;
-extern const unsigned char QUIT_UNEXPECTED_ERROR;
 
 #endif // CONSTANTS_H
 
