@@ -1,6 +1,8 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#include <stdbool.h>
+
 // Errors.
 typedef enum error_type
 {
@@ -8,7 +10,8 @@ typedef enum error_type
   GENERAL_UNEXPECTED_ERROR = 9,
   COMMAND_NO_INPUT = 11,
   COMMAND_DOES_NOT_EXIST = 12,
-  COMMAND_INSUFFICIENT_ARGUMENTS = 13,
+  COMMAND_INSUFFICIENT_ARGUMENT_DATA = 13,
+  COMMAND_EXCESSIVE_ARGUMENT_DATA = 14,
   COMMAND_UNEXPECTED_ERROR = 19,
   START_GAME_ALREADY_IN_PROGRESS = 21,
   START_GAME_HEIGHT_TOO_SMALL = 22,
@@ -50,11 +53,20 @@ typedef enum status_type
   GAME_STATUS_WON
 } Status_type;
 
-// Character info.
-extern const unsigned char WIDTH_OF_CHAR;
-extern const unsigned char CHAR_NULL;
-extern const unsigned char CHAR_SPACE;
-extern const unsigned char CHAR_DELETE;
+// Endianness.
+typedef enum endian_type
+{
+  // Technically there are other types of endian byte orders which are utilized on ancient and exotic systems such as
+  // the Univac, LINC, or PDP-6.  These systems often utilize signed magnitude or 1's complement instead of 2's
+  // complement for storing bits and follow an inverted byte order for negative values.  It is extremely unlikely that
+  // this program will ever be run on such a machine.  In the unforseen event that it is we will add other types to
+  // this enum and add supporting utility functions then.
+  ENDIAN_LITTLE,
+  ENDIAN_BIG
+} Endian_type;
+
+// Characters.
+extern const unsigned char BITS_PER_CHAR;
 
 // Transmission info.
 extern const unsigned short MAXIMUM_POSSIBLE_COMMAND_LENGTH;

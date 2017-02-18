@@ -1,10 +1,8 @@
+#include <stdbool.h>
 #include "constants.h"
 
-// Character info.
-const unsigned char WIDTH_OF_CHAR = 8;
-const unsigned char CHAR_NULL = 0;
-const unsigned char CHAR_SPACE = 32;
-const unsigned char CHAR_DELETE = 127;
+// Characters.
+const unsigned char BITS_PER_CHAR = 8;
 
 // Transmission info.
 const unsigned short MAXIMUM_POSSIBLE_COMMAND_LENGTH = 5;

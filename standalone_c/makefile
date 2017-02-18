@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -std=c11 -Wall
-HEADERS = constants.h mt19937.h server_game.h server_interface.h
-OBJECTS = constants.o mt19937.o server_game.o server_interface.o server_main.o
+HEADERS = constants.h mt19937.h server_game.h server_interface.h utilities.h
+OBJECTS = constants.o mt19937.o server_game.o server_interface.o server_main.o utilities.o
 
 #Explanations for auto-generated object compilation target syntax:                                                \
 "%.o: %.c"   - For every dependency "foo.o" listed in another build target generate a new target that depends on  \
