@@ -6,11 +6,11 @@
 
 void print_bits(unsigned char* start, unsigned char count)
 {
-  for(unsigned char* current_byte = start; current_byte < start + count / 8; current_byte++)
+  for(unsigned char* current_byte = start; current_byte < start + count; current_byte++)
   {
-    for(unsigned char current_bit_index = 0; current_bit_index < 8; current_bit_index++)
+    for(unsigned char current_bit_index = 0; current_bit_index < BITS_PER_CHAR; current_bit_index++)
     {
-      unsigned char bit_mask = 1 << (7 - current_bit_index);
+      unsigned char bit_mask = 1 << (BITS_PER_CHAR - current_bit_index - 1);
       if(*current_byte & bit_mask) printf("1");
       else printf("0");
     }

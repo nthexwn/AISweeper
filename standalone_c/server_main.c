@@ -164,6 +164,17 @@ static void serialize_game_info(Game_info* game_info, Data_string* response_stri
 }
 
 // Command handling functions.
+static void call_shut_down(Data_string* argument_string, Data_string* response_string)
+{
+  if(ensure_valid_length(1, argument_string, response_string))
+  {
+    // Since we're trying to shut down the whole program we don't care if there's no game in progress.  We'll remove
+    // the error message for this before responding to the client.
+    Action_info* action_info = quit_game();
+    if(action_info->error_type == QUIT_GAME_NOT_IN_PROGRESS) action_info->error_type = GENERAL_NO_ERROR;
+    serialize_action_info(action_info, response_string);
+  }
+}
 static void call_start_game(Data_string* argument_string, Data_string* response_string)
 {
   if(ensure_valid_length(5, argument_string, response_string))
@@ -214,57 +225,71 @@ int main()
 {
   // Initialize command handlers.
   void (*command_handlers[6])(Data_string*, Data_string*);
-  command_handlers[0] = &call_quit_game; // shut down.
+  command_handlers[0] = &call_shut_down;
   command_handlers[1] = &call_start_game;
   command_handlers[2] = &call_sync_game;
   command_handlers[3] = &call_reveal;
   command_handlers[4] = &call_toggle_flag;
   command_handlers[5] = &call_quit_game;
 
-  // Stay in the main loop until a shut down command is explicitly made by the client.
+  // Initialize the command and response string structures.
+  Data_string* command_string = (Data_string*)malloc(sizeof(Data_string));
+  Data_string* response_string = (Data_string*)malloc(sizeof(Data_string));
+
+  // Stay in the main loop until a shut down command is explicitly received and the game has been successfully shut
+  // down.
   bool shut_down_requested = false;
   while(!shut_down_requested)
   {
     // Get input from the client.
-    Data_string command_string = obtain_command();
+    command_string->data = (unsigned char*)malloc(MAXIMUM_POSSIBLE_COMMAND_LENGTH);
+    command_string->length = 0;
+    obtain_command(command_string);
 
     // Initialize response string.
-    Data_string response_string = (Data_string){0, (unsigned char*)malloc(MAXIMUM_POSSIBLE_RESPONSE_LENGTH)};
+    response_string->data = (unsigned char*)malloc(MAXIMUM_POSSIBLE_RESPONSE_LENGTH);
+    response_string->length = 0;
 
     // Make sure the command string isn't empty.
-    if(command_string.data == NULL || command_string.length == 1)
+    if(command_string->length == 0)
     {
-      *response_string.data = COMMAND_NO_INPUT;
-      response_string.length++;
+      *response_string->data = COMMAND_NO_INPUT;
+      response_string->length++;
     }
     else
     {
       // Retrieve the command code from the command string.
-      unsigned char command_code = *command_string.data;
+      unsigned char command_code = *command_string->data;
 
       // Make sure the command code represents a valid command.
       if(command_code > (sizeof(command_handlers)/sizeof(void(*)(Data_string*, Data_string*))) - 1)
       {
-        *response_string.data = COMMAND_DOES_NOT_EXIST;
-        response_string.length++;;
+        *response_string->data = COMMAND_DOES_NOT_EXIST;
+        response_string->length++;;
       }
       else
       {
-        // If we've received a shut-down command then set the flag to exit the main loop.
-        if(command_code == 0) shut_down_requested = true;
-
         // Call the command handler function.  It will update the response string internally after calling the command.
-        (*command_handlers[command_code])(&command_string, &response_string);
+        (*command_handlers[command_code])(command_string, response_string);
+
+        // If we've received a shut-down command and the game quit successfully then we're ready to exit the program.
+        if(command_code == 0 && *response_string->data == GENERAL_NO_ERROR) shut_down_requested = true;
       }
     }
 
     // Send the response string back to the client interface.
-    handle_response(&response_string);
+    handle_response(response_string);
 
-    // Erase the input/output strings from this command/response cycle.
-    free(command_string.data);
-    free(response_string.data);
+    // Delete the input/output strings from this command/response cycle.
+    free(command_string->data);
+    command_string->length = 0;
+    free(response_string->data);
+    response_string->length = 0;
   }
+
+  // Delete the command and response string structures.
+  free(command_string);
+  free(response_string);
   return GENERAL_NO_ERROR;
 }
 

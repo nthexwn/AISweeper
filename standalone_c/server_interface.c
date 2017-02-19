@@ -1,5 +1,3 @@
-#define _GNU_SOURCE
-
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,26 +6,41 @@
 #include "utilities.h"
 
 // TODO: Enable human friendly input.
-Data_string obtain_command()
+void obtain_command(Data_string* command_string)
 {
-  // Prompt
+  // Prompt for input.
   printf("Command: ");
 
-  // Capture data as characters.
-  char* input_buffer = NULL;
-  size_t buffer_length = MAXIMUM_POSSIBLE_COMMAND_LENGTH;
-  unsigned short command_length = getline(&input_buffer, &buffer_length, stdin);
-
-  // Convert characters to raw numeric values.
-  for(unsigned char* input_buffer_index = (unsigned char*)input_buffer; input_buffer_index <
-      (unsigned char*)input_buffer + MAXIMUM_POSSIBLE_COMMAND_LENGTH; input_buffer_index++)
+  // Continue filling up the buffer until we receive any control character.
+  unsigned char* command_string_index = command_string->data;
+  unsigned char current_character = CHAR_SPACE;
+  while(current_character > CONTROL_CHARACTER_RANGE)
   {
-    *input_buffer_index -= DATA_TO_CHARACTER_OFFSET;
+    // Get a character from stdin.
+    current_character = (unsigned char)getc(stdin);
+
+    // If the current character is valid (not a control character) and there's still room left in the buffer for more
+    // characters then add it to the buffer.  Note that extra characters (beyond the buffer length) will simply be
+    // thrown out while we're waiting for the next control character (IE: a new line or carriage return).
+    if(current_character > CONTROL_CHARACTER_RANGE && command_string_index < command_string->data +
+                                                                             MAXIMUM_POSSIBLE_COMMAND_LENGTH)
+    {
+      *command_string_index = current_character;
+      command_string_index++;
+      command_string->length++;
+    }
   }
 
-  // Return prepared data string.
-  Data_string command_string = (Data_string){command_length, (unsigned char*)input_buffer};
-  return command_string;
+  // Convert characters in buffer to raw numeric values.
+  for(command_string_index = command_string->data; command_string_index < command_string->data +
+      command_string->length; command_string_index++)
+  {
+    *command_string_index -= DATA_TO_CHARACTER_OFFSET;
+  }
+
+  // Debugging.
+  printf("Sending(binary): ");
+  print_bits(command_string->data, command_string->length);
 }
 
 // TODO: Enable human friendly output.

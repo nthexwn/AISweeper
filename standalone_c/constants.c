@@ -3,6 +3,8 @@
 
 // Characters.
 const unsigned char BITS_PER_CHAR = 8;
+const unsigned char CHAR_SPACE = 32;
+const unsigned char CONTROL_CHARACTER_RANGE = 31;
 const unsigned char DATA_TO_CHARACTER_OFFSET = 48;
 
 // Transmission info.

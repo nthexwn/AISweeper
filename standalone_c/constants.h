@@ -68,6 +68,8 @@ typedef enum endian_type
 
 // Characters.
 extern const unsigned char BITS_PER_CHAR;
+extern const unsigned char CHAR_SPACE;
+extern const unsigned char CONTROL_CHARACTER_RANGE;
 extern const unsigned char DATA_TO_CHARACTER_OFFSET;
 
 // Transmission info.
