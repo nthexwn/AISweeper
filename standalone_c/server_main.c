@@ -48,7 +48,7 @@ static void serialize_action_info(Action_info* action_info, Data_string* respons
   // We'll only add the remaining data if there was no error when processing the command.  If there was an error then
   // the command will have been aborted, nothing in the game will have changed, and the remaining information would be
   // redundant.
-  if(action_info->error_type == GENERAL_NO_ERROR)
+  if(action_info->error_type % 10 == 0)
   {
     // Add game status to the response string.
     *response_string_index = action_info->game_status;
@@ -115,7 +115,7 @@ static void serialize_game_info(Game_info* game_info, Data_string* response_stri
   // We'll only add the remaining data if there was no error when processing the command.  If there was an error then
   // the command will have been aborted, nothing in the game will have changed, and the remaining information would be
   // redundant.
-  if(game_info->error_type == GENERAL_NO_ERROR)
+  if(game_info->error_type % 10 == 0)
   {
     // Add game status to the response string.
     *response_string_index = game_info->game_status;
@@ -171,7 +171,10 @@ static void call_shut_down(Data_string* argument_string, Data_string* response_s
     // Since we're trying to shut down the whole program we don't care if there's no game in progress.  We'll remove
     // the error message for this before responding to the client.
     Action_info* action_info = quit_game();
-    if(action_info->error_type == QUIT_GAME_NOT_IN_PROGRESS) action_info->error_type = GENERAL_NO_ERROR;
+    if(action_info->error_type == QUIT_GAME_NO_ERROR || action_info->error_type == QUIT_GAME_NOT_IN_PROGRESS)
+    {
+      action_info->error_type = SHUT_DOWN_NO_ERROR;
+    }
     serialize_action_info(action_info, response_string);
   }
 }
@@ -273,7 +276,7 @@ int main()
         (*command_handlers[command_code])(command_string, response_string);
 
         // If we've received a shut-down command and the game quit successfully then we're ready to exit the program.
-        if(command_code == 0 && *response_string->data == GENERAL_NO_ERROR) shut_down_requested = true;
+        if(command_code == 0 && *response_string->data == SHUT_DOWN_NO_ERROR) shut_down_requested = true;
       }
     }
 

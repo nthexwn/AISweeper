@@ -339,7 +339,7 @@ Game_info* start_game(unsigned char height, unsigned char width, unsigned short 
   game_status = GAME_STATUS_IN_PROGRESS_NO_REVEAL;
 
   // Return with new game info.
-  game_info->error_type = GENERAL_NO_ERROR;
+  game_info->error_type = START_GAME_NO_ERROR;
   game_info->game_status = game_status;
   game_info->height = current_height;
   game_info->width = current_width;
@@ -384,7 +384,7 @@ Game_info* sync_game()
   }
 
   // Return with the current game info and copy of the game field.
-  game_info->error_type = GENERAL_NO_ERROR;
+  game_info->error_type = SYNC_GAME_NO_ERROR;
   game_info->game_status = game_status;
   game_info->height = current_height;
   game_info->width = current_width;
@@ -516,7 +516,7 @@ Action_info* reveal(unsigned char x, unsigned char y)
   if(unmined_positions_remaining == 0) game_status = GAME_STATUS_WON;
 
   // Return with results of reveal action and list of revealed positions.
-  action_info->error_type = GENERAL_NO_ERROR;
+  action_info->error_type = REVEAL_NO_ERROR;
   action_info->game_status = game_status;
   action_info->mines_not_flagged = mines_not_flagged;
   action_info->mbla_head = mbla_head;
@@ -571,7 +571,7 @@ Action_info* toggle_flag(unsigned char x, unsigned char y)
   *mbla_head = (Copy_node){*position & ~BITS_SENSITIVE, x, y, NULL};
 
   // Return with results of toggle flag action and list containing toggled position.
-  action_info->error_type = GENERAL_NO_ERROR;
+  action_info->error_type = TOGGLE_FLAG_NO_ERROR;
   action_info->game_status = game_status;
   action_info->mines_not_flagged = mines_not_flagged;
   action_info->mbla_head = mbla_head;
@@ -601,7 +601,7 @@ Action_info* quit_game()
   game_status = GAME_STATUS_NOT_IN_PROGRESS;
 
   // Return with updated action info.
-  action_info->error_type = GENERAL_NO_ERROR;
+  action_info->error_type = QUIT_GAME_NO_ERROR;
   action_info->game_status = game_status;
   action_info->mines_not_flagged = mines_not_flagged;
   action_info->mbla_head = NULL;
