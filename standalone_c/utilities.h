@@ -18,16 +18,11 @@ void print_bits(unsigned char* start, unsigned char count);
 // compress the 16-bit data into a single 8-bit character which would appear the same in memory on either architecture.
 Endian_type machine_endian();
 
-// Utility method for extracting values from data in memory.  Caller must provide a reference to the memory location of
-// the data, the length (in bytes) of the value to extract, and a flag indicating whether or not the data is encoded
-// using big or little endian format.  If the data was serialized it will most likely be in network byte order (AKA:
-// big endian) though the code which originally performed the serialization should be manually checked before making
-// this assumption.  If the data was directly placed in memory by the machine then it will depend on the machine's
-// endianness (typically little endian).  In these cases a call can be made to machine_endian to determine the
-// machine's endianness prior to extracting the data.  NOTE: It is up to the caller to cast the returned pointer from
-// this function back to a data type which matches the length value which they originally passed in and to dispose of
-// the data in the buffer when they are through with it.
-unsigned char* extract_value(unsigned char* data, unsigned short length, Endian_type endian_type);
+// Utility method for transfering numeric values between locations in memory and (optionally) converting between endian
+// types.  Caller must provide buffer pointers and endian types for both source data and destination data as well as
+// the length (in bytes) of the value to transfer.
+void transfer_value(unsigned char* source, Endian_type source_type, unsigned char* destination,
+                    Endian_type destination_type, unsigned short length);
 
 #endif // UTILITIES_H
 

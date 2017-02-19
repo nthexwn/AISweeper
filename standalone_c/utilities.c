@@ -26,7 +26,8 @@ Endian_type machine_endian()
   return ENDIAN_LITTLE;
 }
 
-unsigned char* extract_value(unsigned char* data, unsigned short length, Endian_type endian_type)
+void transfer_value(unsigned char* source, Endian_type source_type, unsigned char* destination,
+                    Endian_type destination_type, unsigned short length)
 {
   // Alas, a previous implementation here which utilized bit-shifting did not work since the operators in C are
   // implemented to shift numeric values in the registers and not the actual bits in memory.  This leads to
@@ -35,17 +36,15 @@ unsigned char* extract_value(unsigned char* data, unsigned short length, Endian_
   // is re-ordered from memory as 0b1000000000000001 (absolute highest order to lowest order bits without any
   // distinction between bytes), becomes 0b0100000000000000 after the right shift, and is written back to memory as
   // 0b0000000001000000 with the formerly low order bit having been unintentionally eradicated.  This is frustrating!
-  // Instead, the current implementation relies on copying the original byte values from memory directly into the
-  // return buffer (also in memory) one at a time.
-  unsigned char* buffer = (unsigned char*)malloc(length * sizeof(unsigned char));
-  if(machine_endian() == endian_type)
+  // Instead, the current implementation relies on copying the source byte values from memory directly into the
+  // destination buffer (also in memory) one at a time.
+  if(source_type == destination_type)
   {
-    for(unsigned char index = 0; index < length; index++) *(buffer + index) = *(data + index);
+    for(unsigned char index = 0; index < length; index++) *(destination + index) = *(source + index);
   }
   else
   {
-    for(unsigned char index = 0; index < length; index++) *(buffer + index) = *(data + length - index - 1);
+    for(unsigned char index = 0; index < length; index++) *(destination + index) = *(source + length - index - 1);
   }
-  return buffer;
 }
 

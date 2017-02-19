@@ -1,8 +1,6 @@
 #ifndef SERVER_GAME_H
 #define SERVER_GAME_H
 
-#include <time.h>
-
 // Linked list structure for playing field positions.  Copy_nodes list the filtered contents of playing field
 // positions.  Information regarding unrevealed adjacency and mine presence will be removed from the position data when
 // creating these nodes if the game has not yet been finished.  A separate ref_node structure is used internally for
@@ -25,7 +23,7 @@ typedef struct game_info
   unsigned char height;
   unsigned char width;
   signed short mines_not_flagged;
-  struct timespec time_started;
+  unsigned long seconds_elapsed;
   unsigned char* copy_field_begin;
 } Game_info;
 
@@ -41,7 +39,7 @@ typedef struct action_info
   Error_type error_type;
   unsigned char game_status;
   signed short mines_not_flagged;
-  Copy_node* modified_positions_head;
+  Copy_node* mbla_head;
 } Action_info;
 
 // Starts the game on the server.  Note that the copy_field_begin returned in the game_info object will be null after

@@ -48,6 +48,7 @@ typedef enum error_type
 typedef enum status_type
 {
   GAME_STATUS_NOT_IN_PROGRESS,
+  GAME_STATUS_IN_PROGRESS_NO_REVEAL,
   GAME_STATUS_IN_PROGRESS,
   GAME_STATUS_LOST,
   GAME_STATUS_WON
@@ -67,6 +68,7 @@ typedef enum endian_type
 
 // Characters.
 extern const unsigned char BITS_PER_CHAR;
+extern const unsigned char DATA_TO_CHARACTER_OFFSET;
 
 // Transmission info.
 extern const unsigned short MAXIMUM_POSSIBLE_COMMAND_LENGTH;

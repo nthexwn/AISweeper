@@ -3,6 +3,7 @@
 
 // Characters.
 const unsigned char BITS_PER_CHAR = 8;
+const unsigned char DATA_TO_CHARACTER_OFFSET = 48;
 
 // Transmission info.
 const unsigned short MAXIMUM_POSSIBLE_COMMAND_LENGTH = 5;

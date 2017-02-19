@@ -36,7 +36,6 @@ static void clear_ref_list(Ref_node* ref_head, Ref_node* ref_tail)
 }
 
 // Game variables which are shared between functions.
-static bool first_reveal_setup_performed; // Mines won't be placed until the player has performed a reveal.
 static signed short mines_not_flagged; // Number of mines which haven't been flagged.  Can be negative.
 static unsigned short unmined_positions_remaining; // Number of positions which the player must reveal to win.
 static unsigned short current_mines; // Number of mines on the playing field after setup.
@@ -45,8 +44,8 @@ static unsigned char current_width; // Current width of the playing field.
 static unsigned char* field_begin; // Pointer to first position char in field.
 static Ref_node* nm_head; // Not-mined list used to track available positions for random mine placement and victory.
 static Ref_node* nm_tail; // Not-mined list used to track available positions for random mine placement and victory.
+static unsigned long seconds_started; // Number of seconds after 12:00AM 1/1/1970 that the first reveal was performed.
 static Status_type game_status; // Status code indicating current game state.
-static struct timespec time_started; // Time elapsed between thread start and when the game was started.
 
 // Internal getters and setters for position data.
 static unsigned char get_adjacent(unsigned char *position)
@@ -224,10 +223,10 @@ static void first_reveal_setup(unsigned char x, unsigned char y)
   calculate_adjacency_data();
 
   // Start the timer.
-  clock_gettime(CLOCK_MONOTONIC, &time_started);
+  seconds_started = (unsigned long)time(NULL);
 
-  // Return to reveal function.
-  first_reveal_setup_performed = true;
+  // First reveal has been performed.  Subsequent reveals in the current game will no longer trigger this function.
+  game_status = GAME_STATUS_IN_PROGRESS;
 }
 
 // Helper method for reveal actions.  Used to reveal unmined nodes in a specificed direction adjacent to the current
@@ -301,12 +300,12 @@ Game_info* start_game(unsigned char height, unsigned char width, unsigned short 
   }
 
   // Initialize shared variables.
-  first_reveal_setup_performed = false;
   mines_not_flagged = mines;
   unmined_positions_remaining = height * width;
   current_mines = mines;
   current_height = height;
   current_width = width;
+  seconds_started = 0;
 
   // Allocate memory for playing field.  Note that each position on the field is represented by a single character
   // where the individual bits in that character are utilized for an adjacent mine count, mined flag, revealed flag,
@@ -336,11 +335,8 @@ Game_info* start_game(unsigned char height, unsigned char width, unsigned short 
   nm_head = nm_head->next;
   free(nm_free);
 
-  // Timer will not be started until the player performs their first reveal.
-  memset(&time_started, 0, sizeof(struct timespec));
-
   // Game is ready to play!
-  game_status = GAME_STATUS_IN_PROGRESS;
+  game_status = GAME_STATUS_IN_PROGRESS_NO_REVEAL;
 
   // Return with new game info.
   game_info->error_type = GENERAL_NO_ERROR;
@@ -348,7 +344,7 @@ Game_info* start_game(unsigned char height, unsigned char width, unsigned short 
   game_info->height = current_height;
   game_info->width = current_width;
   game_info->mines_not_flagged = mines_not_flagged;
-  game_info->time_started = time_started;
+  game_info->seconds_elapsed = 0; // Timer won't be started until the first reveal has been performed.
   game_info->copy_field_begin = NULL;
   return game_info;
 }
@@ -363,23 +359,27 @@ Game_info* sync_game()
     return game_info;
   }
 
-  // Create a copy of the game field.
-  unsigned char* copy_field_begin = (unsigned char*)calloc(current_height * current_width, sizeof(unsigned char));
-  unsigned char* copy_field_index = copy_field_begin;
-  for(unsigned char y = 0; y < current_height; y++)
+  // Create a copy of the game field if any positions have already been revealed (otherwise there's nothing to sync).
+  unsigned char* copy_field_begin = NULL;
+  if(game_status > GAME_STATUS_IN_PROGRESS_NO_REVEAL)
   {
-    for(unsigned char x = 0; x < current_width; x++)
+    copy_field_begin = (unsigned char*)calloc(current_height * current_width, sizeof(unsigned char));
+    unsigned char* copy_field_index = copy_field_begin;
+    for(unsigned char y = 0; y < current_height; y++)
     {
-      unsigned char position = *(field_begin + current_width * y + x);
-      if(game_status == GAME_STATUS_IN_PROGRESS && !is_revealed(&position))
+      for(unsigned char x = 0; x < current_width; x++)
       {
-        // If the game isn't finished yet and the position is still unrevealed then we'll filter out the mine and
-        // adjacency information from the copied position data so that the client can't cheat by inspecting these
-        // details.
-        position &= ~BITS_SENSITIVE;
+        unsigned char position = *(field_begin + current_width * y + x);
+        if(game_status == GAME_STATUS_IN_PROGRESS && !is_revealed(&position))
+        {
+	  // If the game isn't finished yet and the position is still unrevealed then we'll filter out the mine and
+	  // adjacency information from the copied position data so that the client can't cheat by inspecting these
+	  // details.
+	  position &= ~BITS_SENSITIVE;
+        }
+        *copy_field_index = position;
+        copy_field_index++;
       }
-      *copy_field_index = position;
-      copy_field_index++;
     }
   }
 
@@ -389,7 +389,8 @@ Game_info* sync_game()
   game_info->height = current_height;
   game_info->width = current_width;
   game_info->mines_not_flagged = mines_not_flagged;
-  game_info->time_started = time_started;
+  game_info->seconds_elapsed = game_status == GAME_STATUS_IN_PROGRESS_NO_REVEAL ? 0 : (unsigned long)time(NULL) -
+                                                                                      seconds_started;
   game_info->copy_field_begin = copy_field_begin;
   return game_info;
 }
@@ -426,7 +427,7 @@ Action_info* reveal(unsigned char x, unsigned char y)
   }
 
   // Setup playing field if this is the first time the player has performed a reveal.
-  if(!first_reveal_setup_performed)
+  if(game_status == GAME_STATUS_IN_PROGRESS_NO_REVEAL)
   {
     first_reveal_setup(x, y);
   }
@@ -447,7 +448,7 @@ Action_info* reveal(unsigned char x, unsigned char y)
     action_info->error_type = GENERAL_NO_ERROR;
     action_info->game_status = game_status;
     action_info->mines_not_flagged = mines_not_flagged;
-    action_info->modified_positions_head = mbla_head;
+    action_info->mbla_head = mbla_head;
     return action_info;
   }
   unmined_positions_remaining--;
@@ -518,7 +519,7 @@ Action_info* reveal(unsigned char x, unsigned char y)
   action_info->error_type = GENERAL_NO_ERROR;
   action_info->game_status = game_status;
   action_info->mines_not_flagged = mines_not_flagged;
-  action_info->modified_positions_head = mbla_head;
+  action_info->mbla_head = mbla_head;
   return action_info;
 }
 
@@ -573,7 +574,7 @@ Action_info* toggle_flag(unsigned char x, unsigned char y)
   action_info->error_type = GENERAL_NO_ERROR;
   action_info->game_status = game_status;
   action_info->mines_not_flagged = mines_not_flagged;
-  action_info->modified_positions_head = mbla_head;
+  action_info->mbla_head = mbla_head;
   return action_info;
 }
 
@@ -588,7 +589,6 @@ Action_info* quit_game()
   }
 
   // Reset all shared variables and lists.
-  first_reveal_setup_performed = false;
   mines_not_flagged = 0;
   unmined_positions_remaining = 0;
   current_mines = 0;
@@ -597,14 +597,14 @@ Action_info* quit_game()
   free(field_begin);
   field_begin = NULL;
   clear_ref_list(nm_head, nm_tail);
+  seconds_started = 0;
   game_status = GAME_STATUS_NOT_IN_PROGRESS;
-  memset(&time_started, 0, sizeof(struct timespec));
 
   // Return with updated action info.
   action_info->error_type = GENERAL_NO_ERROR;
   action_info->game_status = game_status;
   action_info->mines_not_flagged = mines_not_flagged;
-  action_info->modified_positions_head = NULL;
+  action_info->mbla_head = NULL;
   return action_info;
 }
 
