@@ -3,8 +3,19 @@
 
 #include <stdbool.h>
 
+// Status.
+extern const char* status_messages[5];
+typedef enum status_type
+{
+  GAME_STATUS_NOT_IN_PROGRESS = 0,
+  GAME_STATUS_IN_PROGRESS_NO_REVEAL = 1,
+  GAME_STATUS_IN_PROGRESS = 2,
+  GAME_STATUS_LOST = 3,
+  GAME_STATUS_WON = 4
+} Status_type;
+
 // Errors.
-extern const char* error_messages[256];
+extern const char* error_messages[80];
 typedef enum error_type
 {
   GENERAL_NO_ERROR = 0,
@@ -53,15 +64,6 @@ typedef enum error_type
   SHUT_DOWN_UNEXPECTED_ERROR = 79
 } Error_type;
 
-// Status.
-typedef enum status_type
-{
-  GAME_STATUS_NOT_IN_PROGRESS,
-  GAME_STATUS_IN_PROGRESS_NO_REVEAL,
-  GAME_STATUS_IN_PROGRESS,
-  GAME_STATUS_LOST,
-  GAME_STATUS_WON
-} Status_type;
 
 // Endianness.
 typedef enum endian_type

@@ -1,6 +1,8 @@
 #ifndef SERVER_GAME_H
 #define SERVER_GAME_H
 
+#include "constants.h"
+
 // Starts the game on the server.  Note that the copy_field_begin returned in the game_info object will be null after
 // a call to start_game since the client can safely assume that the playing field contains x * y unrevealed positions.
 // It would be a waste of bandwidth to send an x * y segment of zero'd position chars to indicate this.  NOTE:  It is
@@ -40,7 +42,7 @@ Action_info* toggle_flag(unsigned char x, unsigned char y);
 // delete the action_info struct and contents after they are used.
 Action_info* quit_game();
 
-// Temporary display calls for testing purposes (display will ultimately be handled by client).
+// TODO:  Delete temporary display calls for testing purposes (display will ultimately be handled by client).
 void display_as_client();
 void display_as_server();
 

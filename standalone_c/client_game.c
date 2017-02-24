@@ -1,4 +1,6 @@
+#include <stdio.h>
 #include <stdlib.h>
+#include "bits.h"
 #include "client_game.h"
 #include "constants.h"
 #include "time.h"
@@ -17,7 +19,52 @@ static Status_type game_status; // Status code indicating current game state.
 // Display the current game variables and playing field.
 static void client_render()
 {
+  // Display variables.
+  printf("Game status: %s", status_messages[game_status]);
+  printf("Mines not flagged: %u\n", client_mines_not_flagged);
+  printf("Height: %u\n", client_current_height);
+  printf("Width: %u\n", client_current_width);
 
+  // Display time.
+  printf("Seconds elapsed: %lu\n", game_status == GAME_STATUS_IN_PROGRESS ? (unsigned long)time(NULL) -
+                                  client_seconds_started : client_seconds_finished);
+
+  // Display playing field.
+  for(int y = 0; y < client_current_height; y++)
+  {
+    for(int x = 0; x < client_current_width; y++)
+    {
+      unsigned char* position = client_field_begin + client_current_width * y + x;
+      if(is_revealed(position))
+      {
+        if(is_mined(position)) putc('*', stdout);
+        else
+        {
+          unsigned short adjacent_count = get_adjacent(position);
+          if(adjacent_count == 0) putc('_', stdout);
+          else putc(adjacent_count + DATA_TO_CHARACTER_OFFSET, stdout);
+        }
+      }
+      else
+      {
+        if(game_status < GAME_STATUS_LOST)
+        {
+          if(is_flagged(position)) putc('^', stdout);
+          else putc('_', stdout);
+        }
+        else
+        {
+          if(is_mined(position))
+          {
+            if(is_flagged(position)) putc('+', stdout);
+            else putc('-', stdout);
+          }
+          else putc('_', stdout);
+        }
+      }
+    }
+    putc('\n', stdout);
+  }
 }
 
 void client_action_update(Action_info* action_info)

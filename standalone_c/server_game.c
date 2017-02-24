@@ -7,6 +7,7 @@
 #include <sys/syscall.h>
 #include <time.h>
 #include <unistd.h>
+#include "bits.h"
 #include "constants.h"
 #include "mt19937.h"
 #include "server_game.h"
@@ -47,43 +48,6 @@ static Ref_node* nm_tail; // Not-mined list used to track available positions fo
 static unsigned long seconds_started; // Number of seconds after 12:00AM 1/1/1970 that the first reveal was performed.
 static unsigned long seconds_finished; // Number of seconds after seconds_started that the game was finished.
 static Status_type game_status; // Status code indicating current game state.
-
-// Internal getters and setters for position data.
-static unsigned char get_adjacent(unsigned char *position)
-{
-  return *position & BITS_ADJACENT;
-}
-static void set_adjacent(unsigned char* position, unsigned char adjacent_mines)
-{
-  *position |= adjacent_mines;
-}
-static bool is_mined(unsigned char* position)
-{
-  return (*position & BIT_MINED) == BIT_MINED;
-}
-static void set_mined(unsigned char* position, bool value)
-{
-  if(value) *position |= BIT_MINED;
-  else *position &= ~(BIT_MINED);
-}
-static bool is_flagged(unsigned char* position)
-{
-  return (*position & BIT_FLAGGED) == BIT_FLAGGED;
-}
-static void set_flagged(unsigned char* position, bool value)
-{
-  if(value) *position |= BIT_FLAGGED;
-  else *position &= ~(BIT_FLAGGED);
-}
-static bool is_revealed(unsigned char* position)
-{
-  return (*position & BIT_REVEALED) == BIT_REVEALED;
-}
-static void set_revealed(unsigned char* position, bool value)
-{
-  if(value) *position |= BIT_REVEALED;
-  else *position &= ~(BIT_REVEALED);
-}
 
 // Calculate adjacency counts for all of the positions on the playing field which are adjacent to mines and place the
 // detected sum into the leading data bits for each position.
