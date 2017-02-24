@@ -1,17 +1,7 @@
-#ifndef SERVER_INTERFACE_H
-#define SERVER_INTERFACE_H
+#ifndef INTERFACE_H
+#define INTERFACE_H
 
-// Container for unsigned strings which contain raw data.  Relies on a length variable instead of null termination
-// since numerical values are stored directly in these strings instead of being translated through characters.  This
-// means that the null character (AKA: "\0", #0, end of string) is frequently used to represent the actual number 0 and
-// can't be utilized in this structure.  Without any kind of terminator it's up to the function which is handling one
-// of these data strings to never read beyond the provided length of the string.  Likewise, any function which writes
-// to one of these strings must accurately update the length variable after doing so.
-typedef struct data_string
-{
-  unsigned short length;
-  unsigned char* data;
-} Data_string;
+#include "constants.h"
 
 // Loops through input from stdin until a valid command is entered.  Commands will start with a string which is checked
 // against a trie of known commands.  The final character node of each valid command in the trie will list the expected

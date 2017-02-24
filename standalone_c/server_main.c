@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "constants.h"
+#include "interface.h"
 #include "server_game.h"
-#include "server_interface.h"
 #include "utilities.h"
 
 // Helper function to determine if the command+argument data in the command string is of the length required by the

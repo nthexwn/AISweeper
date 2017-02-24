@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "constants.h"
-#include "server_interface.h"
+#include "interface.h"
 #include "utilities.h"
 
-// TODO: Enable human friendly input.
+// TODO: Perform user input processing and validation against the detected command type.
 void obtain_command(Data_string* command_string)
 {
   // Prompt for input.
@@ -43,10 +43,10 @@ void obtain_command(Data_string* command_string)
   print_bits(command_string->data, command_string->length);
 }
 
-// TODO: Enable human friendly output.
+// TODO: Deserialize the response string into either an action_info or game_info struct and call the appropriate
+// handler function on the client.
 void handle_response(Data_string* response_string)
 {
-
   // Display raw data output byte by byte.
   printf("Response: ");
   for(unsigned char* index = response_string->data; index < response_string->data + response_string->length; index++)

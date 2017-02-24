@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include "constants.h"
 
-// Errors
+// Errors.
 const char* error_messages[256] =
 {
   "GENERAL_NO_ERROR", // 0
