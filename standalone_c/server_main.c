@@ -175,6 +175,10 @@ static void call_shut_down(Data_string* argument_string, Data_string* response_s
     {
       action_info->error_type = SHUT_DOWN_NO_ERROR;
     }
+    else if(action_info->error_type == QUIT_GAME_OUT_OF_MEMORY)
+    {
+      action_info->error_type = SHUT_DOWN_OUT_OF_MEMORY;
+    }
     serialize_action_info(action_info, response_string);
   }
 }
@@ -227,13 +231,13 @@ static void call_quit_game(Data_string* argument_string, Data_string* response_s
 int main()
 {
   // Initialize command handlers.
-  void (*command_handlers[6])(Data_string*, Data_string*);
-  command_handlers[0] = &call_shut_down;
-  command_handlers[1] = &call_start_game;
-  command_handlers[2] = &call_sync_game;
-  command_handlers[3] = &call_reveal;
-  command_handlers[4] = &call_toggle_flag;
-  command_handlers[5] = &call_quit_game;
+  void (*command_handlers[NUMBER_OF_SUPPORTED_COMMANDS])(Data_string*, Data_string*);
+  command_handlers[COMMAND_SHUT_DOWN] = &call_shut_down;
+  command_handlers[COMMAND_START_GAME] = &call_start_game;
+  command_handlers[COMMAND_SYNC_GAME] = &call_sync_game;
+  command_handlers[COMMAND_REVEAL] = &call_reveal;
+  command_handlers[COMMAND_TOGGLE_FLAG] = &call_toggle_flag;
+  command_handlers[COMMAND_QUIT_GAME] = &call_quit_game;
 
   // Initialize the command and response string structures.
   Data_string* command_string = (Data_string*)malloc(sizeof(Data_string));
@@ -248,6 +252,10 @@ int main()
     command_string->data = (unsigned char*)malloc(MAXIMUM_POSSIBLE_COMMAND_LENGTH);
     command_string->length = 0;
     obtain_command(command_string);
+
+    // TODO: Debug.
+    printf("Server received binary command: ");
+    print_bits(command_string->data, command_string->length);
 
     // Initialize response string.
     response_string->data = (unsigned char*)malloc(MAXIMUM_POSSIBLE_RESPONSE_LENGTH);
@@ -267,7 +275,7 @@ int main()
       // Make sure the command code represents a valid command.
       if(command_code > (sizeof(command_handlers)/sizeof(void(*)(Data_string*, Data_string*))) - 1)
       {
-        *response_string->data = COMMAND_DOES_NOT_EXIST;
+        *response_string->data = COMMAND_CODE_NOT_VALID;
         response_string->length++;;
       }
       else
@@ -279,6 +287,10 @@ int main()
         if(command_code == 0 && *response_string->data == SHUT_DOWN_NO_ERROR) shut_down_requested = true;
       }
     }
+
+    // TODO: Debug.
+    printf("Server sending binary response: ");
+    print_bits(response_string->data, response_string->length);
 
     // Send the response string back to the client interface.
     handle_response(response_string);

@@ -20,7 +20,7 @@ static Status_type game_status; // Status code indicating current game state.
 static void client_render()
 {
   // Display variables.
-  printf("Game status: %s", status_messages[game_status]);
+  printf("Game status: %s\n", status_messages[game_status]);
   printf("Mines not flagged: %u\n", client_mines_not_flagged);
   printf("Height: %u\n", client_current_height);
   printf("Width: %u\n", client_current_width);
