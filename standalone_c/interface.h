@@ -3,15 +3,9 @@
 
 #include "constants.h"
 
-// Loops through input from stdin until a valid command is entered.  Commands will start with a string which is checked
-// against a trie of known commands.  The final character node of each valid command in the trie will list the expected
-// argument types for that command.  The remainder of the input string will then be parsed for data to match those
-// arguments.  Each argument in the string will be separated by a space character.  Receiving an invalid command string
-// will prompt the user to try again.  Invalid commands will not be sent back to the main server layer.  This is the
-// same mechanism that will be used in the networked version of this program in order to prevent known bad commands
-// from being sent by the client.  Valid commands will be serialized into raw bytes in big endian order and handed off
-// to the main server layer.  The server layer will then perform its own set of validation on the serialized command
-// data.
+// Grabs up to MAXIMUM_POSSIBLE_COMMAND_LENGTH characters from the user (discarding the rest).  These characters are
+// shifted by DATA_TO_CHARACTER_OFFSET as a simple method of allowing the user to enter raw numeric values.  This
+// mechanism is mostly used for testing and will be completely replaced when the web-based client is implemented.
 void obtain_command(Data_string* command_string);
 
 // Deserializes the response string and translates it back into a human readable format which is then sent to stdout.

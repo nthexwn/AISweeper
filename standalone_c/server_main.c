@@ -20,13 +20,13 @@ static bool ensure_valid_length(unsigned short valid_length, Data_string* argume
 {
   if(argument_string->length < valid_length)
   {
-    *(response_string->data + response_string->length) = COMMAND_INSUFFICIENT_ARGUMENT_DATA;
+    *(response_string->data + response_string->length * sizeof(unsigned char)) = COMMAND_INSUFFICIENT_ARGUMENT_DATA;
     response_string->length++;
     return false;
   }
   if(argument_string->length > valid_length)
   {
-    *(response_string->data + response_string->length) = COMMAND_EXCESSIVE_ARGUMENT_DATA;
+    *(response_string->data + response_string->length * sizeof(unsigned char)) = COMMAND_EXCESSIVE_ARGUMENT_DATA;
     response_string->length++;
     return false;
   }
@@ -43,17 +43,17 @@ static void serialize_action_info(Action_info* action_info, Data_string* respons
   // Add error type to response string.
   *response_string_index = (unsigned char)action_info->error_type;
   response_string->length++;
-  response_string_index++;
+  response_string_index += sizeof(unsigned char);
 
   // We'll only add the remaining data if there was no error when processing the command.  If there was an error then
   // the command will have been aborted, nothing in the game will have changed, and the remaining information would be
   // redundant.
-  if(action_info->error_type % 10 == 0)
+  if(action_info->error_type % ERROR_GROUP_WIDTH == 0)
   {
     // Add game status to the response string.
     *response_string_index = action_info->game_status;
     response_string->length++;
-    response_string_index++;
+    response_string_index += sizeof(unsigned char);
 
     // Add unflagged mines count to the response string.
     transfer_value((unsigned char*)&action_info->mines_not_flagged, machine_endian(), response_string_index,
@@ -72,17 +72,17 @@ static void serialize_action_info(Action_info* action_info, Data_string* respons
       // Add x-coordinate of modified position.
       *response_string_index = mbla_index->x;
       response_string->length++;
-      response_string_index++;
+      response_string_index += sizeof(unsigned char);
 
       // Add y-coordinate of modified position.
       *response_string_index = mbla_index->y;
       response_string->length++;
-      response_string_index++;
+      response_string_index += sizeof(unsigned char);
 
       // Add modified position data.
       *response_string_index = mbla_index->position;
       response_string->length++;
-      response_string_index++;
+      response_string_index += sizeof(unsigned char);
 
       // Advance to next position in modified by last action list (and delete the last node).
       Copy_node* mbla_free = mbla_index;
@@ -110,27 +110,17 @@ static void serialize_game_info(Game_info* game_info, Data_string* response_stri
   // Add error type to response string.
   *response_string_index = (unsigned char)game_info->error_type;
   response_string->length++;
-  response_string_index++;
+  response_string_index += sizeof(unsigned char);
 
   // We'll only add the remaining data if there was no error when processing the command.  If there was an error then
   // the command will have been aborted, nothing in the game will have changed, and the remaining information would be
   // redundant.
-  if(game_info->error_type % 10 == 0)
+  if(game_info->error_type % ERROR_GROUP_WIDTH == 0)
   {
     // Add game status to the response string.
     *response_string_index = game_info->game_status;
     response_string->length++;
-    response_string_index++;
-
-    // Add height to the response string.
-    *response_string_index = game_info->height;
-    response_string->length++;
-    response_string_index++;
-
-    // Add width to the response string.
-    *response_string_index = game_info->width;
-    response_string->length++;
-    response_string_index++;
+    response_string_index += sizeof(unsigned char);
 
     // Add unflagged mines count to the response string.
     transfer_value((unsigned char*)&game_info->mines_not_flagged, machine_endian(), response_string_index,
@@ -138,9 +128,21 @@ static void serialize_game_info(Game_info* game_info, Data_string* response_stri
     response_string->length += sizeof(signed short);
     response_string_index += sizeof(signed short);
 
+    // Add height to the response string.
+    *response_string_index = game_info->height;
+    response_string->length++;
+    response_string_index += sizeof(unsigned char);
+
+    // Add width to the response string.
+    *response_string_index = game_info->width;
+    response_string->length++;
+    response_string_index += sizeof(unsigned char);
+
     // Add elapsed time to the response string.
     transfer_value((unsigned char*)&game_info->seconds_elapsed, machine_endian(), response_string_index,
                    ENDIAN_BIG, sizeof(unsigned long));
+    response_string->length += sizeof(unsigned long);
+    response_string_index += sizeof(unsigned long);
 
     // Add copied playing field to the response string.
     if(game_info->copy_field_begin != NULL)
@@ -148,10 +150,10 @@ static void serialize_game_info(Game_info* game_info, Data_string* response_stri
       unsigned short length = game_info->height * game_info->width;
       response_string->length += length;
       for(unsigned char* copy_field_index = game_info->copy_field_begin; copy_field_index <
-          game_info->copy_field_begin + length; copy_field_index++)
+          game_info->copy_field_begin + length * sizeof(unsigned char); copy_field_index++)
       {
         *response_string_index = *copy_field_index;
-        response_string_index++;
+        response_string_index += sizeof(unsigned char);
       }
 
       // Delete the copied playing field now that we've serialized it.
@@ -166,7 +168,7 @@ static void serialize_game_info(Game_info* game_info, Data_string* response_stri
 // Command handling functions.
 static void call_shut_down(Data_string* argument_string, Data_string* response_string)
 {
-  if(ensure_valid_length(1, argument_string, response_string))
+  if(ensure_valid_length(SHUT_DOWN_EXPECTED_LENGTH, argument_string, response_string))
   {
     // Since we're trying to shut down the whole program we don't care if there's no game in progress.  We'll remove
     // the error message for this before responding to the client.
@@ -184,44 +186,44 @@ static void call_shut_down(Data_string* argument_string, Data_string* response_s
 }
 static void call_start_game(Data_string* argument_string, Data_string* response_string)
 {
-  if(ensure_valid_length(5, argument_string, response_string))
+  if(ensure_valid_length(START_GAME_EXPECTED_LENGTH, argument_string, response_string))
   {
-    unsigned char height = *(argument_string->data + 1);
-    unsigned char width = *(argument_string->data + 2);
+    unsigned char height = *(argument_string->data + START_GAME_HEIGHT_OFFSET);
+    unsigned char width = *(argument_string->data + START_GAME_WIDTH_OFFSET);
     unsigned short mines = 0;
-    transfer_value(argument_string->data + 3, ENDIAN_BIG, (unsigned char*)&mines, machine_endian(),
-                   sizeof(unsigned short));
+    transfer_value(argument_string->data + START_GAME_MINES_OFFSET, ENDIAN_BIG, (unsigned char*)&mines,
+                   machine_endian(), sizeof(unsigned short));
     serialize_game_info(start_game(height, width, mines), response_string);
   }
 }
 static void call_sync_game(Data_string* argument_string, Data_string* response_string)
 {
-  if(ensure_valid_length(1, argument_string, response_string))
+  if(ensure_valid_length(SYNC_GAME_EXPECTED_LENGTH, argument_string, response_string))
   {
     serialize_game_info(sync_game(), response_string);
   }
 }
 static void call_reveal(Data_string* argument_string, Data_string* response_string)
 {
-  if(ensure_valid_length(3, argument_string, response_string))
+  if(ensure_valid_length(REVEAL_EXPECTED_LENGTH, argument_string, response_string))
   {
-    unsigned short x = *(argument_string->data + 1);
-    unsigned short y = *(argument_string->data + 2);
+    unsigned short x = *(argument_string->data + REVEAL_X_OFFSET);
+    unsigned short y = *(argument_string->data + REVEAL_Y_OFFSET);
     serialize_action_info(reveal(x, y), response_string);
   }
 }
 static void call_toggle_flag(Data_string* argument_string, Data_string* response_string)
 {
-  if(ensure_valid_length(3, argument_string, response_string))
+  if(ensure_valid_length(TOGGLE_FLAG_EXPECTED_LENGTH, argument_string, response_string))
   {
-    unsigned short x = *(argument_string->data + 1);
-    unsigned short y = *(argument_string->data + 2);
+    unsigned short x = *(argument_string->data + TOGGLE_FLAG_X_OFFSET);
+    unsigned short y = *(argument_string->data + TOGGLE_FLAG_Y_OFFSET);
     serialize_action_info(toggle_flag(x, y), response_string);
   }
 }
 static void call_quit_game(Data_string* argument_string, Data_string* response_string)
 {
-  if(ensure_valid_length(1, argument_string, response_string))
+  if(ensure_valid_length(QUIT_GAME_EXPECTED_LENGTH, argument_string, response_string))
   {
     serialize_action_info(quit_game(), response_string);
   }
@@ -270,21 +272,22 @@ int main()
     else
     {
       // Retrieve the command code from the command string.
-      unsigned char command_code = *command_string->data;
+      unsigned char command_type = *command_string->data;
 
       // Make sure the command code represents a valid command.
-      if(command_code > (sizeof(command_handlers)/sizeof(void(*)(Data_string*, Data_string*))) - 1)
+      if(command_type > (sizeof(command_handlers)/sizeof(void(*)(Data_string*, Data_string*))) - 1)
       {
         *response_string->data = COMMAND_CODE_NOT_VALID;
-        response_string->length++;;
+        response_string->length++;
       }
       else
       {
         // Call the command handler function.  It will update the response string internally after calling the command.
-        (*command_handlers[command_code])(command_string, response_string);
+        (*command_handlers[command_type])(command_string, response_string);
 
         // If we've received a shut-down command and the game quit successfully then we're ready to exit the program.
-        if(command_code == 0 && *response_string->data == SHUT_DOWN_NO_ERROR) shut_down_requested = true;
+        if(command_type == COMMAND_SHUT_DOWN && *response_string->data == SHUT_DOWN_NO_ERROR) shut_down_requested =
+                                                                                              true;
       }
     }
 

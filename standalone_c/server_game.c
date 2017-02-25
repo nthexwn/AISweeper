@@ -57,48 +57,48 @@ static void calculate_adjacency_data()
   {
     for(unsigned char x = 0; x < current_width; x++)
     {
-      unsigned char* position = field_begin + current_width * y + x;
+      unsigned char* position = field_begin + (current_width * y + x) * sizeof(unsigned char);
       if(!is_mined(position))
       {
         unsigned char adjacent_mines = 0;
         if(x > 0 && y > 0)
         {
-          unsigned char* above_left = field_begin + current_width * (y - 1) + x - 1;
+          unsigned char* above_left = field_begin + (current_width * (y - 1) + x - 1) * sizeof(unsigned char);
           if(is_mined(above_left)) adjacent_mines++;
         }
         if(y > 0)
         {
-          unsigned char* above = field_begin + current_width * (y - 1) + x;
+          unsigned char* above = field_begin + (current_width * (y - 1) + x) * sizeof(unsigned char);
           if(is_mined(above)) adjacent_mines++;
         }
         if(x < current_width - 1 && y > 0)
         {
-          unsigned char* above_right = field_begin + current_width * (y - 1) + x + 1;
+          unsigned char* above_right = field_begin + (current_width * (y - 1) + x + 1) * sizeof(unsigned char);
           if(is_mined(above_right)) adjacent_mines++;
         }
         if(x > 0)
         {
-          unsigned char* left = field_begin + current_width * y + x - 1;
+          unsigned char* left = field_begin + (current_width * y + x - 1) * sizeof(unsigned char);
           if(is_mined(left)) adjacent_mines++;
         }
         if(x < current_width - 1)
         {
-          unsigned char* right = field_begin + current_width * y + x + 1;
+          unsigned char* right = field_begin + (current_width * y + x + 1) * sizeof(unsigned char);
           if(is_mined(right)) adjacent_mines++;
         }
         if(x > 0 && y < current_height - 1)
         {
-          unsigned char* below_left = field_begin + current_width * (y + 1) + x - 1;
+          unsigned char* below_left = field_begin + (current_width * (y + 1) + x - 1) * sizeof(unsigned char);
           if(is_mined(below_left)) adjacent_mines++;
         }
         if(y < current_height - 1)
         {
-          unsigned char* below = field_begin + current_width * (y + 1) + x;
+          unsigned char* below = field_begin + (current_width * (y + 1) + x) * sizeof(unsigned char);
           if(is_mined(below)) adjacent_mines++;
         }
         if(x < current_width - 1 && y < current_height - 1)
         {
-          unsigned char* below_right = field_begin + current_width * (y + 1) + x + 1;
+          unsigned char* below_right = field_begin + (current_width * (y + 1) + x + 1) * sizeof(unsigned char);
           if(is_mined(below_right)) adjacent_mines++;
         }
         set_adjacent(position, adjacent_mines);
@@ -291,7 +291,7 @@ Game_info* start_game(unsigned char height, unsigned char width, unsigned short 
   {
     for(unsigned char x = 0; x < width; x++)
     {
-      unsigned char* position = field_begin + width * y + x;
+      unsigned char* position = field_begin + (width * y + x) * sizeof(unsigned char);
       nm_tail->next = (Ref_node*)malloc(sizeof(Ref_node));
       *nm_tail->next = (Ref_node){position, x, y, NULL};
       nm_tail = nm_tail->next;
@@ -335,7 +335,7 @@ Game_info* sync_game()
     {
       for(unsigned char x = 0; x < current_width; x++)
       {
-        unsigned char position = *(field_begin + current_width * y + x);
+        unsigned char position = *(field_begin + (current_width * y + x) * sizeof(unsigned char));
         if(game_status == GAME_STATUS_IN_PROGRESS && !is_revealed(&position))
         {
 	  // If the game isn't finished yet and the position is still unrevealed then we'll filter out the mine and
@@ -344,7 +344,7 @@ Game_info* sync_game()
 	  position &= ~BITS_SENSITIVE;
         }
         *copy_field_index = position;
-        copy_field_index++;
+        copy_field_index += sizeof(unsigned char);
       }
     }
   }
@@ -397,7 +397,7 @@ Action_info* reveal(unsigned char x, unsigned char y)
     action_info->error_type = REVEAL_Y_COORDINATE_TOO_HIGH;
     return action_info;
   }
-  unsigned char* position = field_begin + current_width * y + x;
+  unsigned char* position = field_begin + (current_width * y + x) * sizeof(unsigned char);
   if(is_revealed(position))
   {
     action_info->error_type = REVEAL_MUST_BE_UNREVEALED;
@@ -600,7 +600,7 @@ void display_as_client()
   {
     for(unsigned char x = 0; x < current_width; x++)
     {
-      unsigned char* position = field_begin + current_width * y + x;
+      unsigned char* position = field_begin + (current_width * y + x) * sizeof(unsigned char);
       if(!is_revealed(position))
       {
         printf("?");
@@ -632,7 +632,7 @@ void display_as_server()
   {
     for(unsigned char x = 0; x < current_width; x++)
     {
-      unsigned char* position = field_begin + current_width * y + x;
+      unsigned char* position = field_begin + (current_width * y + x) * sizeof(unsigned char);
       if(is_mined(position))
       {
         printf("X");

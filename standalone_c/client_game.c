@@ -19,6 +19,9 @@ static Status_type game_status; // Status code indicating current game state.
 // Display the current game variables and playing field.
 static void client_render()
 {
+  // TODO: Debug.
+  printf("Inside client_render\n");
+
   // Display variables.
   printf("Game status: %s\n", status_messages[game_status]);
   printf("Mines not flagged: %u\n", client_mines_not_flagged);
@@ -34,7 +37,7 @@ static void client_render()
   {
     for(int x = 0; x < client_current_width; y++)
     {
-      unsigned char* position = client_field_begin + client_current_width * y + x;
+      unsigned char* position = client_field_begin + (client_current_width * y + x) * sizeof(unsigned char);
       if(is_revealed(position))
       {
         if(is_mined(position)) putc('*', stdout);
@@ -69,6 +72,9 @@ static void client_render()
 
 void client_action_update(Action_info* action_info)
 {
+  // TODO: Debug.
+  printf("Inside client_action_update\n");
+
   // Copy variables.
   game_status = action_info->game_status;
   client_mines_not_flagged = action_info->mines_not_flagged;
@@ -98,6 +104,9 @@ void client_action_update(Action_info* action_info)
 
 void client_game_update(Game_info* game_info)
 {
+  // TODO: Debug.
+  printf("Inside client_game_update\n");
+
   // Copy variables.
   game_status = game_info->game_status;
   client_current_height = game_info->height;

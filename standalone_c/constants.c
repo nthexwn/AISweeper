@@ -106,18 +106,41 @@ const char* error_messages[90] =
   "QUIT_GAME_OUT_OF_MEMORY" // 89
 };
 
-// Characters.
-const unsigned char BITS_PER_CHAR = 8;
-const unsigned char CHAR_SPACE = 32;
-const unsigned char CONTROL_CHARACTER_RANGE = 31;
-const unsigned char DATA_TO_CHARACTER_OFFSET = 48;
+// Action info data offsets.
+const unsigned char ACTION_INFO_ERROR_TYPE_OFFSET = 0;
+const unsigned char ACTION_INFO_GAME_STATUS_OFFSET = 1;
+const unsigned char ACTION_INFO_MINES_NOT_FLAGGED_OFFSET = 2;
+const unsigned char ACTION_INFO_MBLA_COUNT_OFFSET = 4;
+const unsigned char ACTION_INFO_MBLA_HEAD_OFFSET = 6;
 
-// Command info.
-const unsigned char NUMBER_OF_SUPPORTED_COMMANDS = 6;
+// Game info data offsets.
+const unsigned char GAME_INFO_ERROR_TYPE_OFFSET = 0;
+const unsigned char GAME_INFO_GAME_STATUS_OFFSET = 1;
+const unsigned char GAME_INFO_MINES_NOT_FLAGGED_OFFSET = 2;
+const unsigned char GAME_INFO_HEIGHT_OFFSET = 4;
+const unsigned char GAME_INFO_WIDTH_OFFSET = 5;
+const unsigned char GAME_INFO_SECONDS_ELAPSED_OFFSET = 6;
+const unsigned char GAME_INFO_COPY_FIELD_BEGIN_OFFSET = 14;
 
-// Transmission info.
-const unsigned short MAXIMUM_POSSIBLE_COMMAND_LENGTH = 5;
-const unsigned short MAXIMUM_POSSIBLE_RESPONSE_LENGTH = 2136;
+// Copy node offsets.
+const unsigned char COPY_NODE_POSITION_OFFSET = 0;
+const unsigned char COPY_NODE_X_OFFSET = 1;
+const unsigned char COPY_NODE_Y_OFFSET = 2;
+
+// Argument lengths and offsets.
+const unsigned char SHUT_DOWN_EXPECTED_LENGTH = 1;
+const unsigned char START_GAME_EXPECTED_LENGTH = 5;
+const unsigned char START_GAME_HEIGHT_OFFSET = 1;
+const unsigned char START_GAME_WIDTH_OFFSET = 2;
+const unsigned char START_GAME_MINES_OFFSET = 3;
+const unsigned char SYNC_GAME_EXPECTED_LENGTH = 1;
+const unsigned char REVEAL_EXPECTED_LENGTH = 3;
+const unsigned char REVEAL_X_OFFSET = 1;
+const unsigned char REVEAL_Y_OFFSET = 2;
+const unsigned char TOGGLE_FLAG_EXPECTED_LENGTH = 3;
+const unsigned char TOGGLE_FLAG_X_OFFSET = 1;
+const unsigned char TOGGLE_FLAG_Y_OFFSET = 2;
+const unsigned char QUIT_GAME_EXPECTED_LENGTH = 1;
 
 // Bit flags for position scheme.
 const unsigned char BITS_ADJACENT = 0xfu;   // 0b00001111
@@ -133,4 +156,18 @@ const unsigned char NEW_GAME_MIN_WIDTH = 9;
 const unsigned char NEW_GAME_MAX_HEIGHT = 24;
 const unsigned char NEW_GAME_MAX_WIDTH = 30;
 const unsigned char NEW_GAME_MIN_MINES = 10;
+
+// Miscellaneous.
+const unsigned char BITS_PER_CHAR = 8;
+const unsigned char CHAR_SPACE = 32;
+const unsigned char CONTROL_CHARACTER_RANGE = 31;
+const unsigned char DATA_TO_CHARACTER_OFFSET = 48;
+const unsigned char ERROR_GROUP_WIDTH = 10;
+const unsigned char ERROR_COMMAND_GROUP_OFFSET = 3;
+const unsigned short MAXIMUM_POSSIBLE_COMMAND_LENGTH = 8;
+const unsigned short MAXIMUM_POSSIBLE_RESPONSE_LENGTH = 4096;
+const unsigned char MINIMUM_REQUIRED_ACTION_INFO_SIZE = 6;
+const unsigned char MINIMUM_REQUIRED_GAME_INFO_SIZE = 14;
+const unsigned char NUMBER_OF_SUPPORTED_COMMANDS = 6;
+const unsigned char POSITION_DATA_SIZE = 3;
 

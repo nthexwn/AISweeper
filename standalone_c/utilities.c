@@ -6,7 +6,8 @@
 
 void print_bits(unsigned char* start, unsigned char count)
 {
-  for(unsigned char* current_byte = start; current_byte < start + count; current_byte++)
+  for(unsigned char* current_byte = start; current_byte < start + count * sizeof(unsigned char); current_byte +=
+      sizeof(unsigned char))
   {
     for(unsigned char current_bit_index = 0; current_bit_index < BITS_PER_CHAR; current_bit_index++)
     {
@@ -40,11 +41,13 @@ void transfer_value(unsigned char* source, Endian_type source_type, unsigned cha
   // destination buffer (also in memory) one at a time.
   if(source_type == destination_type)
   {
-    for(unsigned char index = 0; index < length; index++) *(destination + index) = *(source + index);
+    for(unsigned char index = 0; index < length; index++) *(destination + index * sizeof(unsigned char)) = *(source +
+        index * sizeof(unsigned char));
   }
   else
   {
-    for(unsigned char index = 0; index < length; index++) *(destination + index) = *(source + length - index - 1);
+    for(unsigned char index = 0; index < length; index++) *(destination + index * sizeof(unsigned char)) = *(source +
+        (length - index - 1) * sizeof(unsigned char));
   }
 }
 
