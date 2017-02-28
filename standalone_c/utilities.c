@@ -17,7 +17,6 @@ void print_bits(unsigned char* start, unsigned char count)
     }
     printf(" ");
   }
-  printf("\n");
 }
 
 Endian_type machine_endian()

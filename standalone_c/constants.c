@@ -123,9 +123,9 @@ const unsigned char GAME_INFO_SECONDS_ELAPSED_OFFSET = 6;
 const unsigned char GAME_INFO_COPY_FIELD_BEGIN_OFFSET = 14;
 
 // Copy node offsets.
-const unsigned char COPY_NODE_POSITION_OFFSET = 0;
-const unsigned char COPY_NODE_X_OFFSET = 1;
-const unsigned char COPY_NODE_Y_OFFSET = 2;
+const unsigned char COPY_NODE_X_OFFSET = 0;
+const unsigned char COPY_NODE_Y_OFFSET = 1;
+const unsigned char COPY_NODE_POSITION_OFFSET = 2;
 
 // Argument lengths and offsets.
 const unsigned char SHUT_DOWN_EXPECTED_LENGTH = 1;

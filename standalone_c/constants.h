@@ -57,7 +57,7 @@ typedef enum error_type
   SYNC_GAME_NO_ERROR = 50,
   SYNC_GAME_NOT_IN_PROGRESS = 51,
   SYNC_GAME_OUT_OF_MEMORY = 59,
-  REVEAL_NO_ERROR = 50,
+  REVEAL_NO_ERROR = 60,
   REVEAL_GAME_NOT_IN_PROGRESS = 61,
   REVEAL_GAME_ALREADY_FINISHED = 62,
   REVEAL_X_COORDINATE_TOO_LOW = 63,
@@ -111,9 +111,9 @@ typedef struct data_string
 // reading and writing unfiltered data directly to/from the playing field.
 typedef struct copy_node
 {
-  unsigned char position;
   unsigned char x;
   unsigned char y;
+  unsigned char position;
   struct copy_node* next;
 } Copy_node;
 

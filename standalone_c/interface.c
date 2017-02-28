@@ -24,6 +24,7 @@ static void deserialize_action_info(Action_info* action_info, Data_string* respo
   // We'll use the transfered mbla count to determine if the remaining length of the response string matches the
   // length indicated by the mbla count.  If it does not then we'll abort instead of attempting to read or write
   // outside of the expected bounds.
+
   if(response_string->length < MINIMUM_REQUIRED_ACTION_INFO_SIZE + mbla_count)
   {
     printf("Client error: %s\n", error_messages[RESPONSE_INSUFFICIENT_ARGUMENT_DATA]);
@@ -39,26 +40,26 @@ static void deserialize_action_info(Action_info* action_info, Data_string* respo
   action_info = (Action_info*)malloc(sizeof(Action_info));
   action_info->error_type = *response_string->data + ACTION_INFO_ERROR_TYPE_OFFSET;
   action_info->game_status = *(response_string->data + ACTION_INFO_GAME_STATUS_OFFSET);
-  signed short mines_not_flagged = 0;
   transfer_value(response_string->data + ACTION_INFO_MINES_NOT_FLAGGED_OFFSET, ENDIAN_BIG,
-                 (unsigned char*)&mines_not_flagged, machine_endian(), sizeof(signed short));
+                 (unsigned char*)&action_info->mines_not_flagged, machine_endian(), sizeof(signed short));
 
   // Generate modified by last action list.  May simply be null.
-  Copy_node* mbla_head = (Copy_node*)malloc(sizeof(Copy_node));
-  mbla_head->next = NULL;
-  Copy_node* mbla_index = mbla_head;
+  action_info->mbla_head = (Copy_node*)malloc(sizeof(Copy_node));
+  action_info->mbla_head->next = NULL;
+  Copy_node* mbla_index = action_info->mbla_head;
   for(unsigned char* index = response_string->data + ACTION_INFO_MBLA_HEAD_OFFSET; index < response_string->data +
       ACTION_INFO_MBLA_HEAD_OFFSET + mbla_count * POSITION_DATA_SIZE; index += POSITION_DATA_SIZE)
   {
     Copy_node* mbla_new = (Copy_node*)malloc(sizeof(Copy_node));
-    mbla_new->position = *(index + COPY_NODE_POSITION_OFFSET);
     mbla_new->x = *(index + COPY_NODE_X_OFFSET);
     mbla_new->y = *(index + COPY_NODE_Y_OFFSET);
+    mbla_new->position = *(index + COPY_NODE_POSITION_OFFSET);
+    mbla_new->next = NULL;
     mbla_index->next = mbla_new;
     mbla_index = mbla_index->next;
   }
-  Copy_node* mbla_free = mbla_head;
-  mbla_head = mbla_head->next;
+  Copy_node* mbla_free = action_info->mbla_head;
+  action_info->mbla_head = action_info->mbla_head->next;
   free(mbla_free);
 
   // Send deserialized action info to client.
@@ -167,6 +168,7 @@ void obtain_command(Data_string* command_string)
   // TODO: Debug.
   printf("Client sending binary command: ");
   print_bits(command_string->data, command_string->length);
+  printf("\n");
 }
 
 void handle_response(Data_string* response_string)
@@ -174,6 +176,7 @@ void handle_response(Data_string* response_string)
   // TODO: Debug.
   printf("Client received binary response: ");
   print_bits(response_string->data, response_string->length);
+  printf("\n");
 
   // Make sure the response string isn't empty.
   if(response_string->length == 0)
@@ -201,6 +204,7 @@ void handle_response(Data_string* response_string)
   // Deserialize response and update client.
   Action_info* action_info = NULL;
   Game_info* game_info = NULL;
+
   switch(command_type)
   {
     case COMMAND_SHUT_DOWN:

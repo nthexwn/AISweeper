@@ -18,9 +18,9 @@
 // position has adjacent mines).
 typedef struct ref_node
 {
-  unsigned char* position;
   unsigned char x;
   unsigned char y;
+  unsigned char* position;
   struct ref_node* next;
 } Ref_node;
 
@@ -212,13 +212,13 @@ static void handle_reveal_queue_direction(Ref_node** rq_head, Ref_node** rq_tail
     // information about the positions that would enable the client to cheat.
     set_revealed(position, true);
     (*mbla_tail)->next = (Copy_node*)malloc(sizeof(Copy_node));
-    *(*mbla_tail)->next = (Copy_node){*position, (*rq_head)->x + x_mod, (*rq_head)->y + y_mod, NULL};
+    *(*mbla_tail)->next = (Copy_node){(*rq_head)->x + x_mod, (*rq_head)->y + y_mod, *position, NULL};
     *mbla_tail = (*mbla_tail)->next;
     unmined_positions_remaining--;
     if(get_adjacent(position) == 0)
     {
       (*rq_tail)->next = (Ref_node*)malloc(sizeof(Ref_node));
-      *(*rq_tail)->next = (Ref_node){position, (*rq_head)->x + x_mod, (*rq_head)->y + y_mod, NULL};
+      *(*rq_tail)->next = (Ref_node){(*rq_head)->x + x_mod, (*rq_head)->y + y_mod, position, NULL};
       *rq_tail = (*rq_tail)->next;
     }
   }
@@ -293,7 +293,7 @@ Game_info* start_game(unsigned char height, unsigned char width, unsigned short 
     {
       unsigned char* position = field_begin + (width * y + x) * sizeof(unsigned char);
       nm_tail->next = (Ref_node*)malloc(sizeof(Ref_node));
-      *nm_tail->next = (Ref_node){position, x, y, NULL};
+      *nm_tail->next = (Ref_node){x, y, position, NULL};
       nm_tail = nm_tail->next;
     }
   }
@@ -415,7 +415,7 @@ Action_info* reveal(unsigned char x, unsigned char y)
 
   // Add the revealed position to the modified by last action list.
   Copy_node* mbla_head = (Copy_node*)malloc(sizeof(Copy_node));
-  *mbla_head = (Copy_node){*position, x, y, NULL};
+  *mbla_head = (Copy_node){x, y, *position, NULL};
   Copy_node* mbla_tail = mbla_head;
 
   // Handle lose condition.
@@ -424,7 +424,7 @@ Action_info* reveal(unsigned char x, unsigned char y)
     // Boom!
     game_status = GAME_STATUS_LOST;
     seconds_finished = (unsigned long)time(NULL) - seconds_started;
-    action_info->error_type = GENERAL_NO_ERROR;
+    action_info->error_type = REVEAL_NO_ERROR;
     action_info->game_status = game_status;
     action_info->mines_not_flagged = mines_not_flagged;
     action_info->mbla_head = mbla_head;
@@ -434,7 +434,7 @@ Action_info* reveal(unsigned char x, unsigned char y)
 
   // Populate the reveal queue starting with the first revealed position.
   Ref_node* rq_head = (Ref_node*)malloc(sizeof(Ref_node));
-  *rq_head = (Ref_node){position, x, y, NULL};
+  *rq_head = (Ref_node){x, y, position, NULL};
   Ref_node* rq_tail = rq_head;
 
   // Begin revealing additional positions and adding surrounding unmined+unrevealed+unadjacent positions to the queue.
@@ -551,7 +551,7 @@ Action_info* toggle_flag(unsigned char x, unsigned char y)
 
   // Update modified by last action list with a filtered copy of the toggled position.
   Copy_node* mbla_head = (Copy_node*)malloc(sizeof(Copy_node));
-  *mbla_head = (Copy_node){*position & ~BITS_SENSITIVE, x, y, NULL};
+  *mbla_head = (Copy_node){x, y, *position & ~BITS_SENSITIVE, NULL};
 
   // Return with results of toggle flag action and list containing toggled position.
   action_info->error_type = TOGGLE_FLAG_NO_ERROR;
@@ -590,62 +590,5 @@ Action_info* quit_game()
   action_info->mines_not_flagged = mines_not_flagged;
   action_info->mbla_head = NULL;
   return action_info;
-}
-
-// TODO: Remove this temporary output once testing is complete.
-void display_as_client()
-{
-  printf("Field from client perspective:\n");
-  for(unsigned char y = 0; y < current_height; y++)
-  {
-    for(unsigned char x = 0; x < current_width; x++)
-    {
-      unsigned char* position = field_begin + (current_width * y + x) * sizeof(unsigned char);
-      if(!is_revealed(position))
-      {
-        printf("?");
-      }
-      else
-      {
-        if(is_mined(position))
-        {
-          printf("X");
-        }
-        else
-        {
-          unsigned char adjacent_mines = get_adjacent(position);
-          if(adjacent_mines != 0) printf("%d", adjacent_mines);
-          else printf("_");
-        }
-      }
-    }
-    printf("\n");
-  }
-  printf("\n");
-}
-
-// TODO: Remove this temporary output once testing is complete.
-void display_as_server()
-{
-  printf("Field from server perspective:\n");
-  for(unsigned char y = 0; y < current_height; y++)
-  {
-    for(unsigned char x = 0; x < current_width; x++)
-    {
-      unsigned char* position = field_begin + (current_width * y + x) * sizeof(unsigned char);
-      if(is_mined(position))
-      {
-        printf("X");
-      }
-      else
-      {
-        unsigned char adjacent_mines = get_adjacent(position);
-        if(adjacent_mines != 0) printf("%d", adjacent_mines);
-        else printf("_");
-      }
-    }
-    printf("\n");
-  }
-  printf("\n");
 }
 

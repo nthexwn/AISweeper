@@ -67,6 +67,7 @@ static void serialize_action_info(Action_info* action_info, Data_string* respons
     response_string->length += sizeof(unsigned short);
     response_string_index += sizeof(unsigned short);
     Copy_node* mbla_index = action_info->mbla_head;
+
     while(mbla_index != NULL)
     {
       // Add x-coordinate of modified position.
@@ -258,6 +259,7 @@ int main()
     // TODO: Debug.
     printf("Server received binary command: ");
     print_bits(command_string->data, command_string->length);
+    printf("\n");
 
     // Initialize response string.
     response_string->data = (unsigned char*)malloc(MAXIMUM_POSSIBLE_RESPONSE_LENGTH);
@@ -294,6 +296,7 @@ int main()
     // TODO: Debug.
     printf("Server sending binary response: ");
     print_bits(response_string->data, response_string->length);
+    printf("\n");
 
     // Send the response string back to the client interface.
     handle_response(response_string);

@@ -42,9 +42,5 @@ Action_info* toggle_flag(unsigned char x, unsigned char y);
 // delete the action_info struct and contents after they are used.
 Action_info* quit_game();
 
-// TODO:  Delete temporary display calls for testing purposes (display will ultimately be handled by client).
-void display_as_client();
-void display_as_server();
-
 #endif // SERVER_GAME_H
 
