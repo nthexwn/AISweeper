@@ -1,11 +1,9 @@
 #define _GNU_SOURCE
 
-#include <stdio.h> // TODO:  Remove this along with temporary output in this file once testing is complete.
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <sys/syscall.h>
-#include <time.h>
 #include <unistd.h>
 #include "bits.h"
 #include "constants.h"
@@ -45,8 +43,6 @@ static unsigned char current_width; // Current width of the playing field.
 static unsigned char* field_begin; // Pointer to first position char in field.
 static Ref_node* nm_head; // Not-mined list used to track available positions for random mine placement and victory.
 static Ref_node* nm_tail; // Not-mined list used to track available positions for random mine placement and victory.
-static unsigned long seconds_started; // Number of seconds after 12:00AM 1/1/1970 that the first reveal was performed.
-static unsigned long seconds_finished; // Number of seconds after seconds_started that the game was finished.
 static Status_type game_status; // Status code indicating current game state.
 
 // Calculate adjacency counts for all of the positions on the playing field which are adjacent to mines and place the
@@ -187,9 +183,6 @@ static void first_reveal_setup(unsigned char x, unsigned char y)
   // Now that the mines have all been placed we can calculate the adjacency data for unmined positions.
   calculate_adjacency_data();
 
-  // Start the timer.
-  seconds_started = (unsigned long)time(NULL);
-
   // First reveal has been performed.  Subsequent reveals in the current game will no longer trigger this function.
   game_status = GAME_STATUS_IN_PROGRESS;
 }
@@ -270,8 +263,6 @@ Game_info* start_game(unsigned char height, unsigned char width, unsigned short 
   current_mines = mines;
   current_height = height;
   current_width = width;
-  seconds_started = 0;
-  seconds_finished = 0;
 
   // Allocate memory for playing field.  Note that each position on the field is represented by a single character
   // where the individual bits in that character are utilized for an adjacent mine count, mined flag, revealed flag,
@@ -310,7 +301,6 @@ Game_info* start_game(unsigned char height, unsigned char width, unsigned short 
   game_info->height = current_height;
   game_info->width = current_width;
   game_info->mines_not_flagged = mines_not_flagged;
-  game_info->seconds_elapsed = 0; // Timer won't be started until the first reveal has been performed.
   game_info->copy_field_begin = NULL;
   return game_info;
 }
@@ -355,20 +345,6 @@ Game_info* sync_game()
   game_info->height = current_height;
   game_info->width = current_width;
   game_info->mines_not_flagged = mines_not_flagged;
-  switch(game_status)
-  {
-    case GAME_STATUS_NOT_IN_PROGRESS:
-    case GAME_STATUS_IN_PROGRESS_NO_REVEAL:
-      game_info->seconds_elapsed = 0;
-      break;
-    case GAME_STATUS_IN_PROGRESS:
-      game_info->seconds_elapsed = (unsigned long)time(NULL) - seconds_started;
-      break;
-    case GAME_STATUS_WON:
-    case GAME_STATUS_LOST:
-      game_info->seconds_elapsed = seconds_finished;
-      break;
-  }
   game_info->copy_field_begin = copy_field_begin;
   return game_info;
 }
@@ -403,6 +379,11 @@ Action_info* reveal(unsigned char x, unsigned char y)
     action_info->error_type = REVEAL_MUST_BE_UNREVEALED;
     return action_info;
   }
+  if(is_flagged(position))
+  {
+    action_info->error_type = REVEAL_MUST_UNFLAG_FIRST;
+    return action_info;
+  }
 
   // Setup playing field if this is the first time the player has performed a reveal.
   if(game_status == GAME_STATUS_IN_PROGRESS_NO_REVEAL)
@@ -423,7 +404,6 @@ Action_info* reveal(unsigned char x, unsigned char y)
   {
     // Boom!
     game_status = GAME_STATUS_LOST;
-    seconds_finished = (unsigned long)time(NULL) - seconds_started;
     action_info->error_type = REVEAL_NO_ERROR;
     action_info->game_status = game_status;
     action_info->mines_not_flagged = mines_not_flagged;
@@ -492,11 +472,7 @@ Action_info* reveal(unsigned char x, unsigned char y)
   rq_tail = NULL;
 
   // Handle win condition.
-  if(unmined_positions_remaining == 0)
-  {
-    game_status = GAME_STATUS_WON;
-    seconds_finished = (unsigned long)time(NULL) - seconds_started;
-  }
+  if(unmined_positions_remaining == 0) game_status = GAME_STATUS_WON;
 
   // Return with results of reveal action and list of revealed positions.
   action_info->error_type = REVEAL_NO_ERROR;
@@ -580,8 +556,6 @@ Action_info* quit_game()
   free(field_begin);
   field_begin = NULL;
   clear_ref_list(nm_head, nm_tail);
-  seconds_started = 0;
-  seconds_finished = 0;
   game_status = GAME_STATUS_NOT_IN_PROGRESS;
 
   // Return with updated action info.

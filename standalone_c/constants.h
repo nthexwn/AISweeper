@@ -142,7 +142,6 @@ typedef struct game_info
   signed short mines_not_flagged;
   unsigned char height;
   unsigned char width;
-  unsigned long seconds_elapsed;
   unsigned char* copy_field_begin;
 } Game_info;
 
@@ -159,7 +158,6 @@ extern const unsigned char GAME_INFO_GAME_STATUS_OFFSET;
 extern const unsigned char GAME_INFO_MINES_NOT_FLAGGED_OFFSET;
 extern const unsigned char GAME_INFO_HEIGHT_OFFSET;
 extern const unsigned char GAME_INFO_WIDTH_OFFSET;
-extern const unsigned char GAME_INFO_SECONDS_ELAPSED_OFFSET;
 extern const unsigned char GAME_INFO_COPY_FIELD_BEGIN_OFFSET;
 
 // Copy node offsets.
@@ -206,8 +204,6 @@ extern const unsigned char ERROR_GROUP_WIDTH;
 extern const unsigned char ERROR_COMMAND_GROUP_OFFSET;
 extern const unsigned short MAXIMUM_POSSIBLE_COMMAND_LENGTH;
 extern const unsigned short MAXIMUM_POSSIBLE_RESPONSE_LENGTH;
-extern const unsigned char MINIMUM_REQUIRED_ACTION_INFO_SIZE;
-extern const unsigned char MINIMUM_REQUIRED_GAME_INFO_SIZE;
 extern const unsigned char NUMBER_OF_SUPPORTED_COMMANDS;
 extern const unsigned char POSITION_DATA_SIZE;
 

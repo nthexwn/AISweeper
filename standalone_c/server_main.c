@@ -139,12 +139,6 @@ static void serialize_game_info(Game_info* game_info, Data_string* response_stri
     response_string->length++;
     response_string_index += sizeof(unsigned char);
 
-    // Add elapsed time to the response string.
-    transfer_value((unsigned char*)&game_info->seconds_elapsed, machine_endian(), response_string_index,
-                   ENDIAN_BIG, sizeof(unsigned long));
-    response_string->length += sizeof(unsigned long);
-    response_string_index += sizeof(unsigned long);
-
     // Add copied playing field to the response string.
     if(game_info->copy_field_begin != NULL)
     {

@@ -4,16 +4,12 @@
 #include "bits.h"
 #include "client_game.h"
 #include "constants.h"
-#include "time.h"
 
 // Game variables which are shared between functions.
 static signed short client_mines_not_flagged; // Number of mines which haven't been flagged.  Can be negative.
 static unsigned char client_current_height; // Current height of the playing field.
 static unsigned char client_current_width; // Current width of the playing field.
 static unsigned char* client_field_begin; // Pointer to first position char in field.
-static unsigned long client_seconds_started; // Number of seconds after 12:00AM on 1/1/1970 that the first reveal was
-                                             // performed.  Will be 0 if the first reveal has not yet occurred.
-static unsigned long client_seconds_finished; // Number of seconds after client
 static Status_type game_status; // Status code indicating current game state.
 static bool post_finish_sync_performed; // Used to determine how unrevealed tiles should be rendered.
 
@@ -25,10 +21,6 @@ static void client_render()
   printf("Mines not flagged: %u\n", client_mines_not_flagged);
   printf("Height: %u\n", client_current_height);
   printf("Width: %u\n", client_current_width);
-
-  // Display time.
-  printf("Seconds elapsed: %lu\n", game_status == GAME_STATUS_IN_PROGRESS ? (unsigned long)time(NULL) -
-                                  client_seconds_started : client_seconds_finished);
 
   // Display playing field.
   for(int y = 0; y < client_current_height; y++)
@@ -106,11 +98,6 @@ static void client_render()
 void client_action_update(Action_info* action_info)
 {
   // Copy variables.
-  if(game_status == GAME_STATUS_IN_PROGRESS_NO_REVEAL && action_info->game_status == GAME_STATUS_IN_PROGRESS)
-  {
-    // We just got the response from our first reveal action, so we'll start the timer now.
-    client_seconds_started = (unsigned long)time(NULL);
-  }
   game_status = action_info->game_status;
   if(game_status == GAME_STATUS_NOT_IN_PROGRESS)
   {
@@ -119,8 +106,6 @@ void client_action_update(Action_info* action_info)
     client_current_width = 0;
     free(client_field_begin);
     client_field_begin = NULL;
-    client_seconds_started = 0;
-    client_seconds_finished = 0;
     post_finish_sync_performed = false;
   }
   client_mines_not_flagged = action_info->mines_not_flagged;
@@ -157,25 +142,6 @@ void client_game_update(Game_info* game_info)
   client_mines_not_flagged = game_info->mines_not_flagged;
   if(game_status < GAME_STATUS_LOST) post_finish_sync_performed = false;
   else post_finish_sync_performed = true;
-
-  // Update seconds started and finished variables.
-  switch(game_status)
-  {
-    case GAME_STATUS_NOT_IN_PROGRESS:
-    case GAME_STATUS_IN_PROGRESS_NO_REVEAL:
-      client_seconds_started = 0;
-      client_seconds_finished = 0;
-      break;
-    case GAME_STATUS_IN_PROGRESS:
-      client_seconds_started = (unsigned long)time(NULL) - game_info->seconds_elapsed;
-      client_seconds_finished = 0;
-      break;
-    case GAME_STATUS_WON:
-    case GAME_STATUS_LOST:
-      client_seconds_started = (unsigned long)time(NULL) - game_info->seconds_elapsed;
-      client_seconds_finished = game_info->seconds_elapsed;
-      break;
-  }
 
   // Copy playing field.
   if(client_field_begin != NULL) free(client_field_begin);

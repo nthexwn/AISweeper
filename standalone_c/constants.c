@@ -119,8 +119,7 @@ const unsigned char GAME_INFO_GAME_STATUS_OFFSET = 1;
 const unsigned char GAME_INFO_MINES_NOT_FLAGGED_OFFSET = 2;
 const unsigned char GAME_INFO_HEIGHT_OFFSET = 4;
 const unsigned char GAME_INFO_WIDTH_OFFSET = 5;
-const unsigned char GAME_INFO_SECONDS_ELAPSED_OFFSET = 6;
-const unsigned char GAME_INFO_COPY_FIELD_BEGIN_OFFSET = 14;
+const unsigned char GAME_INFO_COPY_FIELD_BEGIN_OFFSET = 6;
 
 // Copy node offsets.
 const unsigned char COPY_NODE_X_OFFSET = 0;
@@ -166,8 +165,6 @@ const unsigned char ERROR_GROUP_WIDTH = 10;
 const unsigned char ERROR_COMMAND_GROUP_OFFSET = 3;
 const unsigned short MAXIMUM_POSSIBLE_COMMAND_LENGTH = 8;
 const unsigned short MAXIMUM_POSSIBLE_RESPONSE_LENGTH = 4096;
-const unsigned char MINIMUM_REQUIRED_ACTION_INFO_SIZE = 6;
-const unsigned char MINIMUM_REQUIRED_GAME_INFO_SIZE = 14;
 const unsigned char NUMBER_OF_SUPPORTED_COMMANDS = 6;
 const unsigned char POSITION_DATA_SIZE = 3;
 

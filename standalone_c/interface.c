@@ -9,7 +9,7 @@
 static void deserialize_action_info(Action_info* action_info, Data_string* response_string)
 {
   // Error handling.
-  if(response_string->length < MINIMUM_REQUIRED_ACTION_INFO_SIZE)
+  if(response_string->length < ACTION_INFO_MBLA_HEAD_OFFSET)
   {
     // If there's insufficient data present to generate an action info structure then we'll abort now.
     printf("Client error: %s\n", error_messages[RESPONSE_INSUFFICIENT_ARGUMENT_DATA]);
@@ -25,12 +25,12 @@ static void deserialize_action_info(Action_info* action_info, Data_string* respo
   // length indicated by the mbla count.  If it does not then we'll abort instead of attempting to read or write
   // outside of the expected bounds.
 
-  if(response_string->length < MINIMUM_REQUIRED_ACTION_INFO_SIZE + mbla_count)
+  if(response_string->length < ACTION_INFO_MBLA_HEAD_OFFSET + mbla_count)
   {
     printf("Client error: %s\n", error_messages[RESPONSE_INSUFFICIENT_ARGUMENT_DATA]);
     return;
   }
-  if(response_string->length > MINIMUM_REQUIRED_ACTION_INFO_SIZE + mbla_count * POSITION_DATA_SIZE)
+  if(response_string->length > ACTION_INFO_MBLA_HEAD_OFFSET + mbla_count * POSITION_DATA_SIZE)
   {
     printf("Client error: %s\n", error_messages[RESPONSE_EXCESSIVE_ARGUMENT_DATA]);
     return;
@@ -69,7 +69,7 @@ static void deserialize_action_info(Action_info* action_info, Data_string* respo
 static void deserialize_game_info(Game_info* game_info, Data_string* response_string)
 {
   // Error handling.
-  if(response_string->length < MINIMUM_REQUIRED_GAME_INFO_SIZE)
+  if(response_string->length < GAME_INFO_COPY_FIELD_BEGIN_OFFSET)
   {
     // If there's insufficient data present to generate a game info structure then we'll abort now.
     printf("Client error: %s\n", error_messages[RESPONSE_INSUFFICIENT_ARGUMENT_DATA]);
@@ -85,13 +85,13 @@ static void deserialize_game_info(Game_info* game_info, Data_string* response_st
   // length.  For this to be true there must be an exact match of the length or no data provided at all (this is valid
   // in some cases).  If it does not then we'll abort instead of attempting to read or write outside of the expected
   // bounds.
-  if(response_string->length > MINIMUM_REQUIRED_GAME_INFO_SIZE && response_string->length <
-                                                                  MINIMUM_REQUIRED_GAME_INFO_SIZE + field_length)
+  if(response_string->length > GAME_INFO_COPY_FIELD_BEGIN_OFFSET && response_string->length <
+                                                                  GAME_INFO_COPY_FIELD_BEGIN_OFFSET + field_length)
   {
     printf("Client error: %s\n", error_messages[RESPONSE_INSUFFICIENT_ARGUMENT_DATA]);
     return;
   }
-  if(response_string->length > MINIMUM_REQUIRED_GAME_INFO_SIZE + field_length)
+  if(response_string->length > GAME_INFO_COPY_FIELD_BEGIN_OFFSET + field_length)
   {
     printf("Client error: %s\n", error_messages[RESPONSE_EXCESSIVE_ARGUMENT_DATA]);
     return;
@@ -106,10 +106,7 @@ static void deserialize_game_info(Game_info* game_info, Data_string* response_st
                  (unsigned char*)&mines_not_flagged, machine_endian(), sizeof(signed short));
   game_info->height = height;
   game_info->width = width;
-  unsigned long seconds_elapsed = 0;
-  transfer_value(response_string->data + GAME_INFO_SECONDS_ELAPSED_OFFSET, ENDIAN_BIG,
-                 (unsigned char*)&seconds_elapsed, machine_endian(), sizeof(unsigned long));
-  if(response_string->length == MINIMUM_REQUIRED_GAME_INFO_SIZE)
+  if(response_string->length == GAME_INFO_COPY_FIELD_BEGIN_OFFSET)
   {
     // No copy of the playing field was provided, so we'll initialize it ourselves and fill it with empty data.  This
     // is done when a new game was just started and we want the client to initialize on its own instead of wasting
@@ -125,7 +122,7 @@ static void deserialize_game_info(Game_info* game_info, Data_string* response_st
     for(unsigned char index = 0; index < field_length; index++)
     {
       *(game_info->copy_field_begin + index * sizeof(unsigned char)) = *(response_string->data +
-      MINIMUM_REQUIRED_GAME_INFO_SIZE + index * sizeof(unsigned char));
+      GAME_INFO_COPY_FIELD_BEGIN_OFFSET + index * sizeof(unsigned char));
     }
   }
 
