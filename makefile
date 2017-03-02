@@ -3,6 +3,12 @@ CFLAGS := -std=c11 -Wall
 SRC_DIR := src/c/
 BUILD_DIR := build/
 
+#Explanation for mkdir command:                                                                                   \
+Before we can place objects in the build directory we need to ensure that the directory exists.  Placing this     \
+command at the top of the file ensures that the directory will be generated whenever this makefile is parsed.     \
+
+$(shell mkdir -p $(BUILD_DIR))
+
 #Explanations for header search patterns:                                                                         \
 By utilizing the 'wildcard' function which is built in to make we can search for file names which match the       \
 provided pattern.  In our case this pattern will search for files within the source directory which begin with    \
