@@ -1,0 +1,7 @@
+#ifndef SERVER_INTERFACE_H
+#define SERVER_INTERFACE_H
+
+// TODO
+
+#endif // SERVER_INTERFACE_H
+

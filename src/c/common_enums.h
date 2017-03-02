@@ -1,0 +1,93 @@
+#ifndef COMMON_ENUMS_H
+#define COMMON_ENUMS_H
+
+// Commands.
+typedef enum command_type
+{
+  COMMAND_SHUT_DOWN = 0,
+  COMMAND_START_GAME = 1,
+  COMMAND_SYNC_GAME = 2,
+  COMMAND_REVEAL = 3,
+  COMMAND_TOGGLE_FLAG = 4,
+  COMMAND_QUIT_GAME = 5
+} Command_type;
+
+// Status.
+typedef enum status_type
+{
+  GAME_STATUS_NOT_IN_PROGRESS = 0,
+  GAME_STATUS_IN_PROGRESS_NO_REVEAL = 1,
+  GAME_STATUS_IN_PROGRESS = 2,
+  GAME_STATUS_LOST = 3,
+  GAME_STATUS_WON = 4
+} Status_type;
+
+// Errors.
+typedef enum error_type
+{
+  GENERAL_NO_ERROR = 0,
+  GENERAL_UNEXPECTED_ERROR = 9,
+  COMMAND_NO_ERROR = 10,
+  COMMAND_NO_INPUT = 11,
+  COMMAND_CODE_NOT_VALID = 12,
+  COMMAND_INSUFFICIENT_ARGUMENT_DATA = 13,
+  COMMAND_EXCESSIVE_ARGUMENT_DATA = 14,
+  COMMAND_OUT_OF_MEMORY = 19,
+  RESPONSE_NO_ERROR = 20,
+  RESPONSE_NO_INPUT = 21,
+  RESPONSE_CODE_NOT_VALID = 22,
+  RESPONSE_INSUFFICIENT_ARGUMENT_DATA = 23,
+  RESPONSE_EXCESSIVE_ARGUMENT_DATA = 24,
+  RESPONSE_OUT_OF_MEMORY = 29,
+  SHUT_DOWN_NO_ERROR = 30,
+  SHUT_DOWN_OUT_OF_MEMORY = 39,
+  START_GAME_NO_ERROR = 40,
+  START_GAME_ALREADY_IN_PROGRESS = 41,
+  START_GAME_HEIGHT_TOO_SMALL = 42,
+  START_GAME_HEIGHT_TOO_LARGE = 43,
+  START_GAME_WIDTH_TOO_SMALL = 44,
+  START_GAME_WIDTH_TOO_LARGE = 45,
+  START_GAME_NOT_ENOUGH_MINES = 46,
+  START_GAME_TOO_MANY_MINES = 47,
+  START_GAME_OUT_OF_MEMORY = 49,
+  SYNC_GAME_NO_ERROR = 50,
+  SYNC_GAME_NOT_IN_PROGRESS = 51,
+  SYNC_GAME_OUT_OF_MEMORY = 59,
+  REVEAL_NO_ERROR = 60,
+  REVEAL_GAME_NOT_IN_PROGRESS = 61,
+  REVEAL_GAME_ALREADY_FINISHED = 62,
+  REVEAL_X_COORDINATE_TOO_LOW = 63,
+  REVEAL_X_COORDINATE_TOO_HIGH = 64,
+  REVEAL_Y_COORDINATE_TOO_LOW = 65,
+  REVEAL_Y_COORDINATE_TOO_HIGH = 66,
+  REVEAL_MUST_BE_UNREVEALED = 67,
+  REVEAL_MUST_UNFLAG_FIRST = 68,
+  REVEAL_OUT_OF_MEMORY = 69,
+  TOGGLE_FLAG_NO_ERROR = 70,
+  TOGGLE_FLAG_GAME_NOT_IN_PROGRESS = 71,
+  TOGGLE_FLAG_GAME_ALREADY_FINISHED = 72,
+  TOGGLE_FLAG_X_COORDINATE_TOO_LOW = 73,
+  TOGGLE_FLAG_X_COORDINATE_TOO_HIGH = 74,
+  TOGGLE_FLAG_Y_COORDINATE_TOO_LOW = 75,
+  TOGGLE_FLAG_Y_COORDINATE_TOO_HIGH = 76,
+  TOGGLE_FLAG_MUST_BE_UNREVEALED = 77,
+  TOGGLE_FLAG_OUT_OF_MEMORY = 79,
+  QUIT_GAME_NO_ERROR = 80,
+  QUIT_GAME_NOT_IN_PROGRESS = 81,
+  QUIT_GAME_OUT_OF_MEMORY = 89,
+} Error_type;
+
+// Endianness.
+typedef enum endian_type
+{
+  // Technically there are other types of endian byte orders which are utilized on ancient and exotic systems such as
+  // the Univac, LINC, or PDP-6.  These systems often utilize signed magnitude or 1's complement instead of 2's
+  // complement for storing bits and follow an inverted byte order for negative values.  It is extremely unlikely that
+  // this program will ever be run on such a machine.  In the unforseen event that it is we will add other types to
+  // this enum and add supporting utility functions then.
+  ENDIAN_LITTLE,
+  ENDIAN_BIG
+} Endian_type;
+
+#endif // COMMON_ENUMS_H
+
