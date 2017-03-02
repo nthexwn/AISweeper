@@ -1,5 +1,5 @@
-# This file is used to ignore files which are generated
-# ----------------------------------------------------------------------------
+# This file is used to ignore files which are generated.
+# ------------------------------------------------------
 
 # ------
 # [Auto]
@@ -82,10 +82,10 @@ Thumbs.db
 # [Manual]
 # --------
 
-exe
-*.out
-*.pro.user
+*client
+*server
 
 # --------
 # [/Manual]
 # --------
+
