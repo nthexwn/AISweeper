@@ -219,7 +219,7 @@ static void handle_reveal_queue_direction(Ref_node** rq_head, Ref_node** rq_tail
   }
 }
 
-Game_info* start_game(unsigned char height, unsigned char width, unsigned short mines)
+Data_string* server_start_game(Data_string* command_string)
 {
   // Error handling.
   Game_info* game_info = (Game_info*)malloc(sizeof(Game_info));
@@ -307,7 +307,7 @@ Game_info* start_game(unsigned char height, unsigned char width, unsigned short 
   return game_info;
 }
 
-Game_info* sync_game()
+Data_string* server_sync_game(Data_string* command_string)
 {
   // Error handling.
   Game_info* game_info = (Game_info*)malloc(sizeof(Game_info));
@@ -351,7 +351,7 @@ Game_info* sync_game()
   return game_info;
 }
 
-Action_info* reveal(unsigned char x, unsigned char y)
+Data_string* server_reveal_position(Data_string* command_string)
 {
   // Error handling.
   Action_info* action_info = (Action_info*)malloc(sizeof(Action_info));
@@ -484,7 +484,7 @@ Action_info* reveal(unsigned char x, unsigned char y)
   return action_info;
 }
 
-Action_info* toggle_flag(unsigned char x, unsigned char y)
+Data_string* server_toggle_flag(Data_string* command_string)
 {
   // Error handling.
   Action_info* action_info = (Action_info*)malloc(sizeof(Action_info));
@@ -539,7 +539,7 @@ Action_info* toggle_flag(unsigned char x, unsigned char y)
   return action_info;
 }
 
-Action_info* quit_game()
+Data_string* server_quit_game(Data_string* command_string)
 {
   // Error handling.
   Action_info* action_info = (Action_info*)malloc(sizeof(Action_info));

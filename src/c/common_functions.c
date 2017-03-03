@@ -63,15 +63,15 @@ void print_bits(unsigned char* start, unsigned char count)
   }
 }
 
-Endian_type machine_endian()
+Byte_order detect_machine_byte_order()
 {
   unsigned short n = 256;
   if(*(unsigned char *)&n == 1) return ENDIAN_BIG;
   return ENDIAN_LITTLE;
 }
 
-void transfer_value(unsigned char* source, Endian_type source_type, unsigned char* destination,
-                    Endian_type destination_type, unsigned short length)
+void transfer_value(unsigned char* source, Byte_order source_byte_order, unsigned char* destination,
+                    Byte_order destination_byte_order, unsigned short length)
 {
   // Alas, a previous implementation here which utilized bit-shifting did not work since the operators in C are
   // implemented to shift numeric values in the registers and not the actual bits in memory.  This leads to
