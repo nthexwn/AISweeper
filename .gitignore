@@ -82,6 +82,8 @@ Thumbs.db
 # [Manual]
 # --------
 
+.idea/
+cmake-build-debug/
 *client
 *server
 
