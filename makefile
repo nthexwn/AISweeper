@@ -13,7 +13,7 @@ $(shell mkdir -p $(BUILD_DIR))
 By utilizing the 'wildcard' function which is built in to make we can search for file names which match the       \
 provided pattern.  In our case this pattern will search for files within the source directory which begin with    \
 category descriptors (IE: client, common, server) and end in '.h'.  This allows us to separate the headers into   \
-differnt categories for our build targets so that targets only need to be updated when their associated header    \
+different categories for our build targets so that targets only need to be updated when their associated header   \
 files are modified.                                                                                               \
 
 HEADERS_CLIENT := $(wildcard $(SRC_DIR)client_*.h)
