@@ -3,13 +3,12 @@
 
 #include "common_structs.h"
 
-// TODO: Comments describing these functions.
-
-Data_string* server_start_game(Data_string* command_string);
-Data_string* server_sync_game(Data_string* command_string);
-Data_string* server_reveal_position(Data_string* command_string);
-Data_string* server_toggle_flag(Data_string* command_string);
-Data_string* server_quit_game(Data_string* command_string);
+void server_shut_down(Data_string* command_string, Data_string* response_string);
+void server_start_game(Data_string* command_string, Data_string* response_string);
+void server_sync_game(Data_string* command_string, Data_string* response_string);
+void server_reveal_position(Data_string* command_string, Data_string* response_string);
+void server_toggle_flag(Data_string* command_string, Data_string* response_string);
+void server_quit_game(Data_string* command_string, Data_string* response_string);
 
 #endif // SERVER_GAME_H
 

@@ -17,7 +17,7 @@ extern const unsigned char COMMAND_REVEAL_POSITION_X_OFFSET;
 extern const unsigned char COMMAND_REVEAL_POSITION_Y_OFFSET;
 extern const unsigned char COMMAND_TOGGLE_FLAG_REQUIRED_LENGTH;
 extern const unsigned char COMMAND_TOGGLE_FLAG_X_OFFSET;
-extern const unsigned char COMMAND_TOGGLE_FLAG_Y_OFFSET:
+extern const unsigned char COMMAND_TOGGLE_FLAG_Y_OFFSET;
 extern const unsigned char COMMAND_QUIT_GAME_REQUIRED_LENGTH;
 
 // Response lengths and offsets.
@@ -33,6 +33,7 @@ extern const unsigned char RESPONSE_REVEAL_POSITION_REQUIRED_LENGTH;
 extern const unsigned char RESPONSE_REVEAL_POSITION_GAME_STATUS_OFFSET;
 extern const unsigned char RESPONSE_REVEAL_POSITION_MBLA_HEAD_OFFSET;
 extern const unsigned char RESPONSE_TOGGLE_FLAG_REQUIRED_LENGTH;
+extern const unsigned char RESPONSE_TOGGLE_FLAG_MBLA_HEAD_OFFSET;
 extern const unsigned char RESPONSE_QUIT_GAME_REQUIRED_LENGTH;
 
 // Copy node length and offsets.

@@ -56,10 +56,10 @@ void print_bits(unsigned char* start, unsigned char count)
     for(unsigned char current_bit_index = 0; current_bit_index < BITS_PER_CHAR; current_bit_index++)
     {
       unsigned char bit_mask = 1 << (BITS_PER_CHAR - current_bit_index - 1);
-      if(*current_byte & bit_mask) printf("1");
-      else printf("0");
+      if(*current_byte & bit_mask) fputc('1', stdout);
+      else fputc('0', stdout);
     }
-    printf(" ");
+    fputc(' ', stdout);
   }
 }
 
@@ -82,7 +82,7 @@ void transfer_value(unsigned char* source, Byte_order source_byte_order, unsigne
   // 0b0000000001000000 with the formerly low order bit having been unintentionally eradicated.  This is frustrating!
   // Instead, the current implementation relies on copying the source byte values from memory directly into the
   // destination buffer (also in memory) one at a time.
-  if(source_type == destination_type)
+  if(source_byte_order == destination_byte_order)
   {
     for(unsigned char index = 0; index < length; index++) *(destination + index * sizeof(unsigned char)) = *(source +
         index * sizeof(unsigned char));

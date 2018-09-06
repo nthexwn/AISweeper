@@ -7,6 +7,7 @@
 #include "common_functions.h"
 #include "common_structs.h"
 
+/*
 // Game variables which are shared between functions.
 static signed short client_mines_not_flagged; // Number of mines which haven't been flagged.  Can be negative.
 static unsigned char client_current_height; // Current height of the playing field.
@@ -153,4 +154,4 @@ void client_game_update(Game_info* game_info)
   free(game_info);
   client_render();
 }
-
+*/

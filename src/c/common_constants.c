@@ -16,7 +16,7 @@ const unsigned char COMMAND_REVEAL_POSITION_X_OFFSET = 1;
 const unsigned char COMMAND_REVEAL_POSITION_Y_OFFSET = 2;
 const unsigned char COMMAND_TOGGLE_FLAG_REQUIRED_LENGTH = 3;
 const unsigned char COMMAND_TOGGLE_FLAG_X_OFFSET = 1;
-const unsigned char COMMAND_TOGGLE_FLAG_Y_OFFSET = 2:
+const unsigned char COMMAND_TOGGLE_FLAG_Y_OFFSET = 2;
 const unsigned char COMMAND_QUIT_GAME_REQUIRED_LENGTH = 1;
 
 // Response lengths and offsets.
@@ -32,6 +32,7 @@ const unsigned char RESPONSE_REVEAL_POSITION_REQUIRED_LENGTH = 2;
 const unsigned char RESPONSE_REVEAL_POSITION_GAME_STATUS_OFFSET = 1;
 const unsigned char RESPONSE_REVEAL_POSITION_MBLA_HEAD_OFFSET = 2;
 const unsigned char RESPONSE_TOGGLE_FLAG_REQUIRED_LENGTH = 1;
+const unsigned char RESPONSE_TOGGLE_FLAG_MBLA_HEAD_OFFSET = 1;
 const unsigned char RESPONSE_QUIT_GAME_REQUIRED_LENGTH = 1;
 
 // Copy node length and offsets.
@@ -41,7 +42,7 @@ const unsigned char COPY_NODE_Y_OFFSET = 1;
 const unsigned char COPY_NODE_POSITION_OFFSET = 2;
 
 // Bit flags for position scheme.
-const unsigned char BITS_ADJACENT = 0xfu;   // 0b00001111
+const unsigned char BITS_ADJACENT = 0x0fu;  // 0b00001111
 const unsigned char BIT_MINED = 0x10u;      // 0b00010000
 const unsigned char BITS_SENSITIVE = 0x1fu; // 0b00011111
 const unsigned char BIT_FLAGGED = 0x20u;    // 0b00100000

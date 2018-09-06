@@ -7,6 +7,7 @@
 #include "common_functions.h"
 #include "common_structs.h"
 
+/*
 static void deserialize_action_info(Action_info* action_info, Data_string* response_string)
 {
   // Error handling.
@@ -39,7 +40,7 @@ static void deserialize_action_info(Action_info* action_info, Data_string* respo
 
   // Begin deserialization.
   action_info = (Action_info*)malloc(sizeof(Action_info));
-  action_info->error_type = *response_string->data + ACTION_INFO_ERROR_TYPE_OFFSET;
+  action_info->response_code = *response_string->data + ACTION_INFO_response_code_OFFSET;
   action_info->game_status = *(response_string->data + ACTION_INFO_GAME_STATUS_OFFSET);
   transfer_value(response_string->data + ACTION_INFO_MINES_NOT_FLAGGED_OFFSET, ENDIAN_BIG,
                  (unsigned char*)&action_info->mines_not_flagged, machine_endian(), sizeof(signed short));
@@ -100,7 +101,7 @@ static void deserialize_game_info(Game_info* game_info, Data_string* response_st
 
   // Begin deserialization.
   game_info = (Game_info*)malloc(sizeof(Game_info));
-  game_info->error_type = *response_string->data + GAME_INFO_ERROR_TYPE_OFFSET;
+  game_info->response_code = *response_string->data + GAME_INFO_response_code_OFFSET;
   game_info->game_status = *(response_string->data + GAME_INFO_GAME_STATUS_OFFSET);
   signed short mines_not_flagged = 0;
   transfer_value(response_string->data + GAME_INFO_MINES_NOT_FLAGGED_OFFSET, ENDIAN_BIG,
@@ -130,6 +131,7 @@ static void deserialize_game_info(Game_info* game_info, Data_string* response_st
   // Send deserialized game info to client.
   //client_game_update(game_info);
 }
+*/
 
 void obtain_command(Data_string* command_string)
 {
@@ -148,7 +150,7 @@ void obtain_command(Data_string* command_string)
     // characters then add it to the buffer.  Note that extra characters (beyond the buffer length) will simply be
     // thrown out while we're waiting for the next control character (IE: a new line or carriage return).
     if(current_character > CONTROL_CHARACTER_RANGE && command_string_index < command_string->data +
-                                                                             MAXIMUM_POSSIBLE_COMMAND_LENGTH)
+                                                                             COMMAND_BUFFER_LENGTH)
     {
       *command_string_index = current_character;
       command_string_index++;
@@ -175,54 +177,5 @@ void handle_response(Data_string* response_string)
   printf("Client received binary response: ");
   print_bits(response_string->data, response_string->length);
   printf("\n");
-
-  // Make sure the response string isn't empty.
-  if(response_string->length == 0)
-  {
-    printf("Client error: %s\n", error_messages[RESPONSE_NO_INPUT]);
-    return;
-  }
-
-  // If the response indicates that there was an error processing the command then print the error message and return.
-  Error_type error_type = *response_string->data;
-  if(error_type % ERROR_GROUP_WIDTH != 0)
-  {
-    printf("Client error: %s\n", error_messages[error_type]);
-    return;
-  }
-
-  // Determine the type of response.
-  if(error_type / ERROR_GROUP_WIDTH - ERROR_COMMAND_GROUP_OFFSET > NUMBER_OF_SUPPORTED_COMMANDS - 1)
-  {
-    printf("Client error: %s\n", error_messages[RESPONSE_CODE_NOT_VALID]);
-    return;
-  }
-  Command_type command_type = error_type / ERROR_GROUP_WIDTH - ERROR_COMMAND_GROUP_OFFSET;
-
-  // Deserialize response and update client.
-  Action_info* action_info = NULL;
-  Game_info* game_info = NULL;
-
-  switch(command_type)
-  {
-    case COMMAND_SHUT_DOWN:
-      deserialize_action_info(action_info, response_string);
-      break;
-    case COMMAND_START_GAME:
-      deserialize_game_info(game_info, response_string);
-      break;
-    case COMMAND_SYNC_GAME:
-      deserialize_game_info(game_info, response_string);
-      break;
-    case COMMAND_REVEAL:
-      deserialize_action_info(action_info, response_string);
-      break;
-    case COMMAND_TOGGLE_FLAG:
-      deserialize_action_info(action_info, response_string);
-      break;
-    case COMMAND_QUIT_GAME:
-      deserialize_action_info(action_info, response_string);
-      break;
-  }
 }
 
