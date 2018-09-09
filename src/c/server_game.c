@@ -281,22 +281,6 @@ static void reset_shared_variables_and_lists()
   game_status = GAME_STATUS_NOT_IN_PROGRESS;
 }
 
-void server_shut_down(Data_string* command_string, Data_string* response_string)
-{
-  // Error handling.
-  if(!ensure_valid_length(COMMAND_SHUT_DOWN_REQUIRED_LENGTH, command_string, response_string))
-  {
-    return;
-  }
-
-  // Reset all shared variables and lists.
-  reset_shared_variables_and_lists();
-
-  // Add response code to response string.
-  *response_string->data = SHUT_DOWN_NO_ERROR;
-  response_string->length += sizeof(unsigned char);
-}
-
 void server_start_game(Data_string* command_string, Data_string* response_string)
 {
   // Error handling.
@@ -673,7 +657,7 @@ void server_toggle_flag(Data_string* command_string, Data_string* response_strin
 void server_quit_game(Data_string* command_string, Data_string* response_string)
 {
   // Error handling.
-  if(!ensure_valid_length(COMMAND_SHUT_DOWN_REQUIRED_LENGTH, command_string, response_string))
+  if(!ensure_valid_length(COMMAND_QUIT_GAME_REQUIRED_LENGTH, command_string, response_string))
   {
     return;
   }
@@ -692,3 +676,34 @@ void server_quit_game(Data_string* command_string, Data_string* response_string)
   response_string->length += sizeof(unsigned char);
 }
 
+void server_disconnect_client(Data_string* command_string, Data_string* response_string)
+{
+  // Error handling.
+  if(!ensure_valid_length(COMMAND_DISCONNECT_CLIENT_REQUIRED_LENGTH, command_string, response_string))
+  {
+    return;
+  }
+
+  // Reset all shared variables and lists.
+  reset_shared_variables_and_lists();
+
+  // Add response code to response string.
+  *response_string->data = DISCONNECT_CLIENT_NO_ERROR;
+  response_string->length += sizeof(unsigned char);
+}
+
+void server_shut_down(Data_string* command_string, Data_string* response_string)
+{
+  // Error handling.
+  if(!ensure_valid_length(COMMAND_SHUT_DOWN_REQUIRED_LENGTH, command_string, response_string))
+  {
+    return;
+  }
+
+  // Reset all shared variables and lists.
+  reset_shared_variables_and_lists();
+
+  // Add response code to response string.
+  *response_string->data = SHUT_DOWN_NO_ERROR;
+  response_string->length += sizeof(unsigned char);
+}

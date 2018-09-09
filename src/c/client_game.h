@@ -3,16 +3,13 @@
 
 #include "common_structs.h"
 
-/*
-// Update the client's model of the game state based on the last action.  Finishes with a call to client_render in
-// order to display the updated game state.
-void client_action_update(Action_info* action_info);
-
-// Update the client's model of the game state based on new game or sync requests.  Finishes with a call to
-// client_render in order to display the updated game state.
-void client_game_update(Game_info* game_info);
-
-*/
+void client_start_game(Data_string* command_string, Data_string* response_string);
+void client_sync_game(Data_string* command_string, Data_string* response_string);
+void client_reveal_position(Data_string* command_string, Data_string* response_string);
+void client_toggle_flag(Data_string* command_string, Data_string* response_string);
+void client_quit_game(Data_string* command_string, Data_string* response_string);
+void client_disconnect_client(Data_string* command_string, Data_string* response_string);
+void client_shut_down(Data_string* command_string, Data_string* response_string);
 
 #endif // CLIENT_GAME_H
 

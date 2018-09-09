@@ -34,5 +34,8 @@ Byte_order detect_machine_byte_order();
 void transfer_value(unsigned char* source, Byte_order source_byte_order, unsigned char* destination,
                     Byte_order destination_byte_order, unsigned short length);
 
+// Helper method for displaying result of condition checks and using the condition to control program flow.
+bool validate_condition(bool condition, int value);
+
 #endif // COMMON_FUNCTIONS_H
 

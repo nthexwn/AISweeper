@@ -1,11 +1,39 @@
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "client_game.h"
-#include "common_constants.h"
-#include "common_enums.h"
-#include "common_functions.h"
-#include "common_structs.h"
+
+void client_start_game(Data_string* command_string, Data_string* response_string)
+{
+  // TODO
+}
+
+void client_sync_game(Data_string* command_string, Data_string* response_string)
+{
+  // TODO
+}
+
+void client_reveal_position(Data_string* command_string, Data_string* response_string)
+{
+  // TODO
+}
+
+void client_toggle_flag(Data_string* command_string, Data_string* response_string)
+{
+  // TODO
+}
+
+void client_quit_game(Data_string* command_string, Data_string* response_string)
+{
+  // TODO
+}
+
+void client_disconnect_client(Data_string* command_string, Data_string* response_string)
+{
+  // TODO
+}
+
+void client_shut_down(Data_string* command_string, Data_string* response_string)
+{
+  // TODO
+}
 
 /*
 // Game variables which are shared between functions.
@@ -155,3 +183,4 @@ void client_game_update(Game_info* game_info)
   client_render();
 }
 */
+

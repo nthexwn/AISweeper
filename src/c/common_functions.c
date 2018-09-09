@@ -94,3 +94,17 @@ void transfer_value(unsigned char* source, Byte_order source_byte_order, unsigne
   }
 }
 
+bool validate_condition(bool condition, int value)
+{
+  if(condition)
+  {
+    fputs("SUCCESS(", stdout);
+  }
+  else
+  {
+    fputs("FAILURE(", stdout);
+  }
+  fprintf(stdout, "%d)\n", value);
+  return condition;
+}
+

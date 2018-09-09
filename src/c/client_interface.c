@@ -1,181 +1,100 @@
-#include <stddef.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <unistd.h>
 #include "client_interface.h"
 #include "common_constants.h"
 #include "common_enums.h"
 #include "common_functions.h"
-#include "common_structs.h"
 
-/*
-static void deserialize_action_info(Action_info* action_info, Data_string* response_string)
+static bool client_connected = false;
+static bool command_sent = false;
+static bool response_received = false;
+static bool disconnect_requested = false;
+static int client_socket_descriptor = 0;
+
+static int connect_client()
 {
-  // Error handling.
-  if(response_string->length < ACTION_INFO_MBLA_HEAD_OFFSET)
+  // Prepare socket for connections
+  fputs("Creating client socket... ", stdout);
+  client_socket_descriptor = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+  if(!validate_condition(client_socket_descriptor > -1, client_socket_descriptor))
   {
-    // If there's insufficient data present to generate an action info structure then we'll abort now.
-    printf("Client error: %s\n", error_messages[RESPONSE_INSUFFICIENT_ARGUMENT_DATA]);
-    return;
+    return CLIENT_SOCKET_CREATION_FAILED;
   }
-
-  // We now know there's at least enough information present to extract the mbla list count.
-  unsigned short mbla_count = 0;
-  transfer_value(response_string->data + ACTION_INFO_MBLA_COUNT_OFFSET, ENDIAN_BIG, (unsigned char*)&mbla_count,
-                 machine_endian(), sizeof(unsigned short));
-
-  // We'll use the transfered mbla count to determine if the remaining length of the response string matches the
-  // length indicated by the mbla count.  If it does not then we'll abort instead of attempting to read or write
-  // outside of the expected bounds.
-
-  if(response_string->length < ACTION_INFO_MBLA_HEAD_OFFSET + mbla_count)
+  fputs("Converting server address information... ", stdout);
+  struct sockaddr_in server_socket_address = {0};
+  server_socket_address.sin_family = AF_INET;
+  server_socket_address.sin_port = htons(SERVER_PORT_NUMBER);
+  int convert_result = inet_pton(AF_INET, SERVER_ADDRESS, &server_socket_address.sin_addr);
+  if(!validate_condition(convert_result > -1, convert_result))
   {
-    printf("Client error: %s\n", error_messages[RESPONSE_INSUFFICIENT_ARGUMENT_DATA]);
-    return;
+    return CLIENT_SERVER_ADDRESS_CONVERSION_FAILED;
   }
-  if(response_string->length > ACTION_INFO_MBLA_HEAD_OFFSET + mbla_count * POSITION_DATA_SIZE)
+  fputs("Connecting client to server... ", stdout);
+  int connect_result = connect(client_socket_descriptor, (struct sockaddr*)&server_socket_address,
+                               sizeof(server_socket_address));
+  if(!validate_condition(connect_result > -1, connect_result))
   {
-    printf("Client error: %s\n", error_messages[RESPONSE_EXCESSIVE_ARGUMENT_DATA]);
-    return;
+    return CLIENT_CONNECTION_TO_SERVER_FAILED;
   }
-
-  // Begin deserialization.
-  action_info = (Action_info*)malloc(sizeof(Action_info));
-  action_info->response_code = *response_string->data + ACTION_INFO_response_code_OFFSET;
-  action_info->game_status = *(response_string->data + ACTION_INFO_GAME_STATUS_OFFSET);
-  transfer_value(response_string->data + ACTION_INFO_MINES_NOT_FLAGGED_OFFSET, ENDIAN_BIG,
-                 (unsigned char*)&action_info->mines_not_flagged, machine_endian(), sizeof(signed short));
-
-  // Generate modified by last action list.  May simply be null.
-  action_info->mbla_head = (Copy_node*)malloc(sizeof(Copy_node));
-  action_info->mbla_head->next = NULL;
-  Copy_node* mbla_index = action_info->mbla_head;
-  for(unsigned char* index = response_string->data + ACTION_INFO_MBLA_HEAD_OFFSET; index < response_string->data +
-      ACTION_INFO_MBLA_HEAD_OFFSET + mbla_count * POSITION_DATA_SIZE; index += POSITION_DATA_SIZE)
-  {
-    Copy_node* mbla_new = (Copy_node*)malloc(sizeof(Copy_node));
-    mbla_new->x = *(index + COPY_NODE_X_OFFSET);
-    mbla_new->y = *(index + COPY_NODE_Y_OFFSET);
-    mbla_new->position = *(index + COPY_NODE_POSITION_OFFSET);
-    mbla_new->next = NULL;
-    mbla_index->next = mbla_new;
-    mbla_index = mbla_index->next;
-  }
-  Copy_node* mbla_free = action_info->mbla_head;
-  action_info->mbla_head = action_info->mbla_head->next;
-  free(mbla_free);
-
-  // Send deserialized action info to client.
-  //client_action_update(action_info);
+  client_connected = true;
+  return GENERAL_NO_ERROR;
 }
 
-static void deserialize_game_info(Game_info* game_info, Data_string* response_string)
+static void send_command_to_server(Data_string* command_string)
 {
-  // Error handling.
-  if(response_string->length < GAME_INFO_COPY_FIELD_BEGIN_OFFSET)
+  fputs("Sending... ", stdout);
+  int send_result = send(client_socket_descriptor, command_string->data, command_string->length,
+                         CLIENT_SEND_OPTIONS);
+  if(validate_condition(send_result > - 1, send_result))
   {
-    // If there's insufficient data present to generate a game info structure then we'll abort now.
-    printf("Client error: %s\n", error_messages[RESPONSE_INSUFFICIENT_ARGUMENT_DATA]);
-    return;
+    command_sent = true;
   }
-
-  // We now know there's at least enough information present to extract the height and width of the playing field.
-  unsigned char height = *(response_string->data + GAME_INFO_HEIGHT_OFFSET);
-  unsigned char width = *(response_string->data + GAME_INFO_WIDTH_OFFSET);
-  unsigned short field_length = height * width;
-
-  // We'll use the calculated field_length to determine if the provided copy of the field data matches the expected
-  // length.  For this to be true there must be an exact match of the length or no data provided at all (this is valid
-  // in some cases).  If it does not then we'll abort instead of attempting to read or write outside of the expected
-  // bounds.
-  if(response_string->length > GAME_INFO_COPY_FIELD_BEGIN_OFFSET && response_string->length <
-                                                                  GAME_INFO_COPY_FIELD_BEGIN_OFFSET + field_length)
+  if(command_string->length > 0 && (*command_string->data == COMMAND_DISCONNECT_CLIENT ||
+                                    *command_string->data == COMMAND_SHUT_DOWN))
   {
-    printf("Client error: %s\n", error_messages[RESPONSE_INSUFFICIENT_ARGUMENT_DATA]);
-    return;
+    disconnect_requested = true;
   }
-  if(response_string->length > GAME_INFO_COPY_FIELD_BEGIN_OFFSET + field_length)
-  {
-    printf("Client error: %s\n", error_messages[RESPONSE_EXCESSIVE_ARGUMENT_DATA]);
-    return;
-  }
-
-  // Begin deserialization.
-  game_info = (Game_info*)malloc(sizeof(Game_info));
-  game_info->response_code = *response_string->data + GAME_INFO_response_code_OFFSET;
-  game_info->game_status = *(response_string->data + GAME_INFO_GAME_STATUS_OFFSET);
-  signed short mines_not_flagged = 0;
-  transfer_value(response_string->data + GAME_INFO_MINES_NOT_FLAGGED_OFFSET, ENDIAN_BIG,
-                 (unsigned char*)&mines_not_flagged, machine_endian(), sizeof(signed short));
-  game_info->height = height;
-  game_info->width = width;
-  if(response_string->length == GAME_INFO_COPY_FIELD_BEGIN_OFFSET)
-  {
-    // No copy of the playing field was provided, so we'll initialize it ourselves and fill it with empty data.  This
-    // is done when a new game was just started and we want the client to initialize on its own instead of wasting
-    // bandwidth by transmitting a bunch of zeros.
-    game_info->copy_field_begin = (unsigned char*)calloc(field_length, sizeof(unsigned char));
-  }
-  else
-  {
-    // A copy of the playing field was provided, so we'll initialize space for it prior to copying the data over.  Note
-    // that we don't need to zero initialize the data (calloc) here because the data is guaranteed to be overwritten
-    // from the copied playing field.
-    game_info->copy_field_begin = (unsigned char*)malloc(field_length);
-    for(unsigned char index = 0; index < field_length; index++)
-    {
-      *(game_info->copy_field_begin + index * sizeof(unsigned char)) = *(response_string->data +
-      GAME_INFO_COPY_FIELD_BEGIN_OFFSET + index * sizeof(unsigned char));
-    }
-  }
-
-  // Send deserialized game info to client.
-  //client_game_update(game_info);
-}
-*/
-
-void obtain_command(Data_string* command_string)
-{
-  // Prompt for input.
-  printf("Command: ");
-
-  // Continue filling up the buffer until we receive any control character.
-  unsigned char* command_string_index = command_string->data;
-  unsigned char current_character = CHAR_SPACE;
-  while(current_character > CONTROL_CHARACTER_RANGE)
-  {
-    // Get a character from stdin.
-    current_character = (unsigned char)getc(stdin);
-
-    // If the current character is valid (not a control character) and there's still room left in the buffer for more
-    // characters then add it to the buffer.  Note that extra characters (beyond the buffer length) will simply be
-    // thrown out while we're waiting for the next control character (IE: a new line or carriage return).
-    if(current_character > CONTROL_CHARACTER_RANGE && command_string_index < command_string->data +
-                                                                             COMMAND_BUFFER_LENGTH)
-    {
-      *command_string_index = current_character;
-      command_string_index++;
-      command_string->length++;
-    }
-  }
-
-  // Convert characters in buffer to raw numeric values.
-  for(command_string_index = command_string->data; command_string_index < command_string->data +
-      command_string->length; command_string_index++)
-  {
-    *command_string_index -= DATA_TO_CHARACTER_OFFSET;
-  }
-
-  // TODO: Debug.
-  printf("Client sending binary command: ");
-  print_bits(command_string->data, command_string->length);
-  printf("\n");
 }
 
-void handle_response(Data_string* response_string)
+static void receive_response_from_server(Data_string* response_string)
 {
-  // TODO: Debug.
-  printf("Client received binary response: ");
-  print_bits(response_string->data, response_string->length);
-  printf("\n");
+  fputs("Receiving... ", stdout);
+  int receive_result =  recv(client_socket_descriptor, response_string->data, RESPONSE_BUFFER_LENGTH,
+                             CLIENT_RECEIVE_OPTIONS);
+  if(validate_condition(receive_result > - 1, receive_result))
+  {
+    response_received = true;
+  }
+  if(disconnect_requested)
+  {
+    fputs("Closing connection to server... ", stdout);
+    int close_result = close(client_socket_descriptor);
+    validate_condition(close_result > -1, close_result);
+  }
+}
+
+void send_command(Data_string* command_string)
+{
+  while(!client_connected)
+  {
+    connect_client();
+  }
+  command_sent = false;
+  while(!command_sent)
+  {
+    send_command_to_server(command_string);
+  }
+}
+
+void receive_response(Data_string* response_string)
+{
+  response_received = false;
+  while(!response_received)
+  {
+    receive_response_from_server(response_string);
+  }
 }
 
