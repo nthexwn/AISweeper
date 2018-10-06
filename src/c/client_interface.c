@@ -45,9 +45,16 @@ static int connect_client()
 
 static void send_command_to_server(Data_string* command_string)
 {
-  fputs("Sending... ", stdout);
-  int send_result = send(client_socket_descriptor, command_string->data, command_string->length,
-                         CLIENT_SEND_OPTIONS);
+  fputs("Sending command... ", stdout);
+  int command_length_net = 0;
+  transfer_value((unsigned char*)&command_string->length, detect_machine_byte_order(),
+                 (unsigned char*)&command_length_net, ENDIAN_BIG, sizeof(int));
+  int send_result = send(client_socket_descriptor, &command_length_net, sizeof(int), CLIENT_SEND_OPTIONS);
+  if(send_result > -1)
+  {
+    send_result = send(client_socket_descriptor, command_string->data, command_string->length,
+                       CLIENT_SEND_OPTIONS);
+  }
   if(validate_condition(send_result > - 1, send_result))
   {
     command_sent = true;
@@ -61,13 +68,43 @@ static void send_command_to_server(Data_string* command_string)
 
 static void receive_response_from_server(Data_string* response_string)
 {
-  fputs("Receiving... ", stdout);
-  int receive_result =  recv(client_socket_descriptor, response_string->data, RESPONSE_BUFFER_LENGTH,
-                             CLIENT_RECEIVE_OPTIONS);
-  if(validate_condition(receive_result > - 1, receive_result))
+  fputs("Receiving response... ", stdout);
+  int receive_result = -1;
+  int bytes_received = 0;
+  int response_size_net = 0;
+  int response_size_local = 0;
+  while(bytes_received < sizeof(int))
+  {
+    receive_result = recv(client_socket_descriptor, &response_size_net + bytes_received, sizeof(int),
+                          CLIENT_RECEIVE_OPTIONS);
+    if(receive_result < 0)
+    {
+      break;
+    }
+    bytes_received += receive_result;
+  }
+  if(bytes_received == sizeof(int))
+  {
+    transfer_value((unsigned char*)&response_size_net, ENDIAN_BIG, (unsigned char*)&response_size_local,
+                   detect_machine_byte_order(), sizeof(int));
+  }
+  bytes_received = 0;
+  while(bytes_received < response_size_local)
+  {
+    receive_result = recv(client_socket_descriptor, response_string->data + bytes_received, response_size_local,
+                          CLIENT_RECEIVE_OPTIONS);
+    if(receive_result < 0)
+    {
+      break;
+    }
+    bytes_received += receive_result;
+  }
+  if(bytes_received == response_size_local)
   {
     response_received = true;
+    response_string->length = bytes_received;
   }
+  validate_condition(response_received, bytes_received);
   if(disconnect_requested)
   {
     fputs("Closing connection to server... ", stdout);

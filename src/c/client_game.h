@@ -10,6 +10,7 @@ void client_toggle_flag(Data_string* command_string, Data_string* response_strin
 void client_quit_game(Data_string* command_string, Data_string* response_string);
 void client_disconnect_client(Data_string* command_string, Data_string* response_string);
 void client_shut_down(Data_string* command_string, Data_string* response_string);
+void client_render();
 
 #endif // CLIENT_GAME_H
 

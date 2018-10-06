@@ -12,13 +12,13 @@ int main()
 {
   // Initialize command handlers.
   void (*command_handlers[SUPPORTED_COMMAND_COUNT])(Data_string*, Data_string*);
-  command_handlers[COMMAND_START_GAME] = &server_start_game;
-  command_handlers[COMMAND_SYNC_GAME] = &server_sync_game;
-  command_handlers[COMMAND_REVEAL_POSITION] = &server_reveal_position;
-  command_handlers[COMMAND_TOGGLE_FLAG] = &server_toggle_flag;
-  command_handlers[COMMAND_QUIT_GAME] = &server_quit_game;
-  command_handlers[COMMAND_DISCONNECT_CLIENT] = &server_disconnect_client;
-  command_handlers[COMMAND_SHUT_DOWN] = &server_shut_down;
+  command_handlers[COMMAND_START_GAME] = &server_start_game;               // 0
+  command_handlers[COMMAND_SYNC_GAME] = &server_sync_game;                 // 1
+  command_handlers[COMMAND_REVEAL_POSITION] = &server_reveal_position;     // 2
+  command_handlers[COMMAND_TOGGLE_FLAG] = &server_toggle_flag;             // 3
+  command_handlers[COMMAND_QUIT_GAME] = &server_quit_game;                 // 4
+  command_handlers[COMMAND_DISCONNECT_CLIENT] = &server_disconnect_client; // 5
+  command_handlers[COMMAND_SHUT_DOWN] = &server_shut_down;                 // 6
 
   // Initialize the command and response string structures.
   Data_string* command_string = (Data_string*)malloc(sizeof(Data_string));
@@ -52,7 +52,7 @@ int main()
       unsigned char command_code = *command_string->data;
 
       // Make sure the command code represents a valid command.
-      if(command_code > (sizeof(command_handlers)/sizeof(void(*)(Data_string*, Data_string*))) - 1)
+      if(command_code > (sizeof(command_handlers)/sizeof(void(*)(Data_string*, Data_string*))))
       {
         *response_string->data = COMMAND_CODE_NOT_VALID;
         response_string->length += sizeof(unsigned char);

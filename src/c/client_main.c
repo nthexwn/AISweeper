@@ -20,9 +20,13 @@ void obtain_command(Data_string* command_string)
     {
       break;
     }
-    *command_string_index = next_character;
-    command_string_index += sizeof(unsigned char);
-    command_string->length += sizeof(unsigned char);
+    else if(next_character >= DATA_TO_CHARACTER_OFFSET)
+    {
+      next_character -= DATA_TO_CHARACTER_OFFSET;
+      *command_string_index = next_character;
+      command_string_index += sizeof(unsigned char);
+      command_string->length += sizeof(unsigned char);
+    }
   }
 }
 
@@ -91,7 +95,7 @@ int main()
       {
         unsigned char response_command_group = (response_code - response_code % RESPONSE_CODE_GROUP_WIDTH) /
                                               RESPONSE_CODE_GROUP_WIDTH;
-        if(response_command_group > (sizeof(response_handlers)/sizeof(void(*)(Data_string*, Data_string*))) - 1)
+        if(response_command_group > (sizeof(response_handlers)/sizeof(void(*)(Data_string*, Data_string*))))
         {
           fprintf(stdout, "Server response command group (%d) does not correspond with any known commands!\n",
                   response_command_group);
@@ -104,7 +108,8 @@ int main()
         else
         {
           // Call the response handler function.
-          (*response_handlers[response_code])(command_string, response_string);
+          (*response_handlers[response_command_group])(command_string, response_string);
+          client_render();
         }
       }
     }

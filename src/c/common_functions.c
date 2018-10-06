@@ -84,13 +84,17 @@ void transfer_value(unsigned char* source, Byte_order source_byte_order, unsigne
   // destination buffer (also in memory) one at a time.
   if(source_byte_order == destination_byte_order)
   {
-    for(unsigned char index = 0; index < length; index++) *(destination + index * sizeof(unsigned char)) = *(source +
-        index * sizeof(unsigned char));
+    for(unsigned char index = 0; index < length; index++)
+    {
+      *(destination + index * sizeof(unsigned char)) = *(source + index * sizeof(unsigned char));
+    }
   }
   else
   {
-    for(unsigned char index = 0; index < length; index++) *(destination + index * sizeof(unsigned char)) = *(source +
-        (length - index - 1) * sizeof(unsigned char));
+    for(unsigned char index = 0; index < length; index++)
+    {
+      *(destination + index * sizeof(unsigned char)) = *(source + (length - index - 1) * sizeof(unsigned char));
+    }
   }
 }
 

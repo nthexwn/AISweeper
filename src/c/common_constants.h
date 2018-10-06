@@ -4,8 +4,8 @@
 #define RESPONSE_CODE_COUNT 100
 
 // Buffer lengths.
-extern const unsigned short COMMAND_BUFFER_LENGTH;
-extern const unsigned short RESPONSE_BUFFER_LENGTH;
+extern const unsigned int COMMAND_BUFFER_LENGTH;
+extern const unsigned int RESPONSE_BUFFER_LENGTH;
 
 // Command lengths and offsets.
 extern const unsigned char COMMAND_START_GAME_REQUIRED_LENGTH;

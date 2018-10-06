@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <zconf.h>
 #include "server_interface.h"
 #include "common_constants.h"
 #include "common_enums.h"
@@ -79,20 +80,57 @@ static void connect_to_client()
 
 static void receive_command_from_client(Data_string* command_string)
 {
-  fputs("Receiving... ", stdout);
-  int receive_result =  recv(client_connection_descriptor, command_string->data, COMMAND_BUFFER_LENGTH,
-                             SERVER_RECEIVE_OPTIONS);
-  if(validate_condition(receive_result > - 1, receive_result))
+  fputs("Receiving command... ", stdout);
+  int receive_result = -1;
+  int bytes_received = 0;
+  int command_size_net = 0;
+  int command_size_local = 0;
+  while(bytes_received < sizeof(int))
+  {
+    receive_result = recv(client_connection_descriptor, &command_size_net + bytes_received, sizeof(int),
+        SERVER_RECEIVE_OPTIONS);
+    if(receive_result < 0)
+    {
+      break;
+    }
+    bytes_received += receive_result;
+  }
+  if(bytes_received == sizeof(int))
+  {
+    transfer_value((unsigned char*)&command_size_net, ENDIAN_BIG, (unsigned char*)&command_size_local,
+        detect_machine_byte_order(), sizeof(int));
+  }
+  bytes_received = 0;
+  while(bytes_received < command_size_local)
+  {
+    receive_result = recv(client_connection_descriptor, command_string->data + bytes_received, command_size_local,
+        SERVER_RECEIVE_OPTIONS);
+    if(receive_result < 0)
+    {
+      break;
+    }
+    bytes_received += receive_result;
+  }
+  if(bytes_received == command_size_local)
   {
     command_received = true;
+    command_string->length = bytes_received;
   }
+  validate_condition(command_received, bytes_received);
 }
 
 static void send_response_to_client(Data_string* response_string)
 {
-  fputs("Sending... ", stdout);
-  int send_result = send(client_connection_descriptor, response_string->data, response_string->length,
-                         SERVER_SEND_OPTIONS);
+  fputs("Sending response... ", stdout);
+  int command_length_net = 0;
+  transfer_value((unsigned char*)&response_string->length, detect_machine_byte_order(),
+      (unsigned char*)&command_length_net, ENDIAN_BIG, sizeof(int));
+  int send_result = send(client_connection_descriptor, &command_length_net, sizeof(int), SERVER_SEND_OPTIONS);
+  if(send_result > -1)
+  {
+    send_result = send(client_connection_descriptor, response_string->data, response_string->length,
+                       CLIENT_SEND_OPTIONS);
+  }
   if(validate_condition(send_result > - 1, send_result))
   {
     response_sent = true;

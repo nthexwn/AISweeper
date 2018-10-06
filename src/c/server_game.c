@@ -271,8 +271,11 @@ static void reset_shared_variables_and_lists()
   clear_ref_list(nm_head);
   nm_head = NULL;
   nm_tail = NULL;
-  free(field_begin);
-  field_begin = NULL;
+  if(field_begin != NULL)
+  {
+    free(field_begin);
+    field_begin = NULL;
+  }
   mines_not_flagged = 0;
   unmined_positions_remaining = 0;
   current_mines = 0;
